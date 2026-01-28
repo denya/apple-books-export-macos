@@ -23,6 +23,7 @@ class BooksViewModel: ObservableObject {
     @Published var highlightSort: HighlightSortOption = .book
 
     private var database: AppleBooksDatabase?
+    private var lastSelectedBookId: String?
 
     var filteredBooks: [Book] {
         var result = books
@@ -170,6 +171,27 @@ class BooksViewModel: ObservableObject {
         } else {
             selectedBookIds.insert(id)
         }
+        lastSelectedBookId = id
+    }
+
+    func handleShiftClick(_ id: String) {
+        guard isSelectionMode else { return }
+
+        // If no last selection, just select this one
+        guard let lastId = lastSelectedBookId,
+              let lastIndex = filteredBooks.firstIndex(where: { $0.id == lastId }),
+              let currentIndex = filteredBooks.firstIndex(where: { $0.id == id }) else {
+            selectedBookIds.insert(id)
+            lastSelectedBookId = id
+            return
+        }
+
+        // Select range
+        let range = lastIndex < currentIndex ? lastIndex...currentIndex : currentIndex...lastIndex
+        for index in range {
+            selectedBookIds.insert(filteredBooks[index].id)
+        }
+        lastSelectedBookId = id
     }
 
     func toggleSelectionMode() {

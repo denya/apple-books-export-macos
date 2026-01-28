@@ -101,14 +101,21 @@ struct BookListView: View {
             } else {
                 List(selection: $selectedBookId) {
                     // "All books" item
-                    HStack(spacing: 8) {
-                        Image(systemName: "book.fill")
-                            .foregroundStyle(.blue)
-                        Text("All Books")
-                            .font(.body)
-                            .fontWeight(.semibold)
+                    Button(action: {
+                        selectedBookId = nil
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "book.fill")
+                                .foregroundStyle(selectedBookId == nil ? .blue : .secondary)
+                            Text("All Books")
+                                .font(.body)
+                                .fontWeight(selectedBookId == nil ? .semibold : .regular)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
-                    .tag(nil as String?)
+                    .buttonStyle(.plain)
+                    .listRowBackground(selectedBookId == nil ? Color.blue.opacity(0.1) : Color.clear)
                     .padding(.vertical, 2)
 
                     Divider()
@@ -117,6 +124,9 @@ struct BookListView: View {
                     ForEach(viewModel.filteredBooks) { book in
                         BookRowView(book: book, viewModel: viewModel)
                             .tag(book.id as String?)
+                            .onTapGesture {
+                                selectedBookId = book.id
+                            }
                     }
                 }
                 .listStyle(.sidebar)

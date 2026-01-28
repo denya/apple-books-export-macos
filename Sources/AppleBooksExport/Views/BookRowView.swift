@@ -8,6 +8,8 @@ struct BookRowView: View {
         viewModel.selectedBookIds.contains(book.id)
     }
 
+    @State private var isHovering = false
+
     var body: some View {
         HStack(spacing: 8) {
             // Only show checkbox in selection mode
@@ -45,7 +47,30 @@ struct BookRowView: View {
                     .cornerRadius(8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .gesture(
+                TapGesture(count: 1)
+                    .modifiers(.command)
+                    .onEnded { _ in
+                        if viewModel.isSelectionMode {
+                            viewModel.toggleBookSelection(book.id)
+                        }
+                    }
+            )
+            .simultaneousGesture(
+                TapGesture(count: 1)
+                    .modifiers(.shift)
+                    .onEnded { _ in
+                        if viewModel.isSelectionMode {
+                            viewModel.handleShiftClick(book.id)
+                        }
+                    }
+            )
         }
         .padding(.vertical, 2)
+        .background(isHovering && viewModel.isSelectionMode ? Color.gray.opacity(0.1) : Color.clear)
+        .onHover { hovering in
+            isHovering = hovering
+        }
     }
 }
