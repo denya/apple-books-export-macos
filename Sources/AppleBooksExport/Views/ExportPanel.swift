@@ -52,8 +52,13 @@ struct ExportPanel: View {
 
             // Progress
             if exportViewModel.isExporting {
-                ProgressView("Exporting...")
-                    .progressViewStyle(.linear)
+                VStack(spacing: 8) {
+                    ProgressView("Exporting...")
+                        .progressViewStyle(.linear)
+                }
+                .padding(12)
+                .background(.ultraThinMaterial)
+                .cornerRadius(8)
             }
 
             // Buttons
@@ -75,7 +80,8 @@ struct ExportPanel: View {
             }
         }
         .padding(20)
-        .frame(width: 500, height: 350)
+        .frame(minWidth: 400, maxWidth: 600, minHeight: 300, maxHeight: 500)
+        .background(.regularMaterial)
         .alert("Export Error", isPresented: $showingError) {
             Button("OK") {
                 showingError = false

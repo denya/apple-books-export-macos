@@ -1,0 +1,222 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '15.4'
+
+      - name: Resolve Swift dependencies
+        run: swift package resolve
+
+      - name: Build Universal Binary
+        run: |
+          # Build for Intel
+          swift build -c release --arch x86_64
+
+          # Build for Apple Silicon
+          swift build -c release --arch arm64
+
+          # Create universal binary
+          lipo -create \
+            .build/x86_64-apple-macosx/release/AppleBooksExport \
+            .build/arm64-apple-macosx/release/AppleBooksExport \
+            -output .build/AppleBooksExport
+
+          # Verify architectures
+          lipo -info .build/AppleBooksExport
+
+      - name: Import Code Signing Certificate
+        if: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 != '' }}
+        run: |
+          # Create temporary keychain
+          security create-keychain -p "${{ secrets.KEYCHAIN_PASSWORD || 'temp-password' }}" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "${{ secrets.KEYCHAIN_PASSWORD || 'temp-password' }}" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Import certificate
+          echo "${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 }}" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "${{ secrets.APPLE_DEVELOPER_CERTIFICATE_PASSWORD }}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "${{ secrets.KEYCHAIN_PASSWORD || 'temp-password' }}" build.keychain
+
+          # Clean up certificate file
+          rm certificate.p12
+
+      - name: Create App Bundle
+        run: |
+          mkdir -p dist/AppleBooksExport.app/Contents/MacOS
+          mkdir -p dist/AppleBooksExport.app/Contents/Resources
+
+          # Copy binary
+          cp .build/AppleBooksExport dist/AppleBooksExport.app/Contents/MacOS/
+
+          # Create Info.plist
+          cat > dist/AppleBooksExport.app/Contents/Info.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>AppleBooksExport</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.applebooksexport.macos</string>
+              <key>CFBundleName</key>
+              <string>AppleBooksExport</string>
+              <key>CFBundleDisplayName</key>
+              <string>Apple Books Export</string>
+              <key>CFBundleVersion</key>
+              <string>1.0.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>14.0</string>
+              <key>CFBundleIconFile</key>
+              <string>AppIcon</string>
+              <key>NSHumanReadableCopyright</key>
+              <string>Copyright © 2026. All rights reserved.</string>
+              <key>LSApplicationCategoryType</key>
+              <string>public.app-category.productivity</string>
+          </dict>
+          </plist>
+          EOF
+
+          # Copy icon if available
+          if [ -f "Sources/AppleBooksExport/Resources/Icon.icns" ]; then
+            cp Sources/AppleBooksExport/Resources/Icon.icns dist/AppleBooksExport.app/Contents/Resources/AppIcon.icns
+          fi
+
+      - name: Code Sign App Bundle
+        if: ${{ secrets.APPLE_DEVELOPER_CERTIFICATE_P12_BASE64 != '' }}
+        run: |
+          codesign --force --deep --sign "Developer ID Application" \
+            --options runtime \
+            --entitlements entitlements.plist \
+            dist/AppleBooksExport.app
+
+      - name: Create DMG
+        run: |
+          # Install create-dmg if not available
+          brew install create-dmg || true
+
+          # Create DMG
+          create-dmg \
+            --volname "Apple Books Export" \
+            --window-pos 200 120 \
+            --window-size 800 400 \
+            --icon-size 100 \
+            --icon "AppleBooksExport.app" 200 190 \
+            --hide-extension "AppleBooksExport.app" \
+            --app-drop-link 600 185 \
+            "AppleBooksExport.dmg" \
+            "dist/" || \
+          # Fallback to hdiutil if create-dmg fails
+          hdiutil create -volname "Apple Books Export" \
+            -srcfolder dist \
+            -ov -format UDZO \
+            AppleBooksExport.dmg
+
+      - name: Notarize DMG
+        if: ${{ secrets.APPLE_ID != '' && secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+        run: |
+          # Submit for notarization
+          xcrun notarytool submit AppleBooksExport.dmg \
+            --apple-id "${{ secrets.APPLE_ID }}" \
+            --password "${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}" \
+            --team-id "${{ secrets.APPLE_TEAM_ID }}" \
+            --wait
+
+          # Staple notarization ticket to DMG
+          xcrun stapler staple AppleBooksExport.dmg
+
+      - name: Clean up Keychain
+        if: always()
+        run: |
+          security delete-keychain build.keychain || true
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppleBooksExport-${{ github.sha }}
+          path: AppleBooksExport.dmg
+          retention-days: 30
+
+      - name: Create or Update Latest Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: Latest Build (Development)
+          body: |
+            ## Latest Development Build
+
+            This is an automated build from the main branch.
+
+            **Commit:** ${{ github.sha }}
+            **Date:** ${{ github.event.head_commit.timestamp }}
+            **Message:** ${{ github.event.head_commit.message }}
+
+            ### Note
+            This is a pre-release development build. For stable releases, see the [Releases page](https://github.com/${{ github.repository }}/releases).
+
+            ### Installation
+            1. Download AppleBooksExport.dmg
+            2. Open the DMG file
+            3. Drag Apple Books Export to Applications
+            4. Right-click and select "Open" on first launch (Gatekeeper requirement)
+          files: AppleBooksExport.dmg
+          prerelease: true
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Tagged Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Apple Books Export ${{ github.ref_name }}
+
+            ### Features
+            - 📚 Browse all books in your Apple Books library
+            - 🔍 Search and filter annotations by color, type, and book
+            - ✅ Select specific books or annotations for export
+            - 📤 Export to HTML, Markdown, JSON, CSV formats
+            - 🌓 Dark mode support
+            - 🎨 Color-coded highlights
+            - ⌨️ Full keyboard navigation and accessibility support
+
+            ### Requirements
+            - macOS 14.0 (Sonoma) or later
+            - Apple Books with existing library and annotations
+
+            ### Installation
+            1. Download AppleBooksExport.dmg
+            2. Open the DMG file
+            3. Drag Apple Books Export to Applications
+            4. Right-click and select "Open" on first launch (Gatekeeper requirement)
+
+            ### Changes in This Release
+            See commit history for detailed changes.
+          files: AppleBooksExport.dmg
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

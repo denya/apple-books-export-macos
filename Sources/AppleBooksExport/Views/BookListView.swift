@@ -10,18 +10,22 @@ struct BookListView: View {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
                 TextField("Search books", text: $viewModel.searchText)
                     .textFieldStyle(.plain)
+                    .accessibilityLabel("Search books")
+                    .keyboardShortcut("f", modifiers: .command)
                 if !viewModel.searchText.isEmpty {
                     Button(action: { viewModel.searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Clear search")
                 }
             }
             .padding(8)
-            .background(Color(nsColor: .controlBackgroundColor))
+            .background(.ultraThinMaterial)
 
             Divider()
 
@@ -44,6 +48,8 @@ struct BookListView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .fixedSize()
+                .accessibilityLabel("Sort books")
+                .accessibilityHint("Current sort: \(viewModel.bookSort.rawValue)")
 
                 Button(action: { viewModel.showFilters.toggle() }) {
                     Label("Filters", systemImage: viewModel.showFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
@@ -53,10 +59,13 @@ struct BookListView: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color(nsColor: .controlBackgroundColor))
+            .background(.ultraThinMaterial)
 
             if viewModel.showFilters {
                 FilterControlsView(viewModel: viewModel)
+                    .padding(8)
+                    .background(.thinMaterial)
+                    .cornerRadius(8)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
             }
@@ -84,6 +93,13 @@ struct BookListView: View {
                         }
                     }
                 }
+                .padding(24)
+                .background(.red.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(.red.opacity(0.3), lineWidth: 1)
+                )
+                .cornerRadius(12)
                 .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.filteredBooks.isEmpty {
@@ -97,6 +113,10 @@ struct BookListView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                .padding(24)
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(selection: $selectedBookId) {
@@ -115,7 +135,15 @@ struct BookListView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .listRowBackground(selectedBookId == nil ? Color.blue.opacity(0.1) : Color.clear)
+                    .listRowBackground(selectedBookId == nil ?
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(.blue.opacity(0.15))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .strokeBorder(.blue.opacity(0.3), lineWidth: 1)
+                            )
+                        : Color.clear
+                    )
                     .padding(.vertical, 2)
 
                     Divider()
@@ -146,6 +174,8 @@ struct BookListView: View {
                     }
                     .buttonStyle(.link)
                     .font(.caption)
+                    .keyboardShortcut("a", modifiers: .command)
+                    .accessibilityHint("Keyboard shortcut: Command+A")
                     Button("Deselect All") {
                         viewModel.deselectAll()
                     }
@@ -153,7 +183,7 @@ struct BookListView: View {
                     .font(.caption)
                 }
                 .padding(8)
-                .background(Color(nsColor: .controlBackgroundColor))
+                .background(.ultraThinMaterial)
             }
         }
         .navigationTitle("Books (\(viewModel.filteredBooks.count))")

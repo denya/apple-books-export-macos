@@ -19,6 +19,9 @@ struct BookRowView: View {
                         .foregroundStyle(isSelected ? .blue : .secondary)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Select book")
+                .accessibilityValue(isSelected ? "selected" : "not selected")
+                .accessibilityAddTraits(.isToggle)
             }
 
             HStack(spacing: 6) {
@@ -43,8 +46,9 @@ struct BookRowView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(Color.blue.opacity(0.8))
+                    .background(.blue)
                     .cornerRadius(8)
+                    .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
@@ -68,7 +72,7 @@ struct BookRowView: View {
             )
         }
         .padding(.vertical, 2)
-        .background(isHovering && viewModel.isSelectionMode ? Color.gray.opacity(0.1) : Color.clear)
+        .background(isHovering && viewModel.isSelectionMode ? Color(nsColor: .quaternaryLabelColor).opacity(0.2) : .clear)
         .onHover { hovering in
             isHovering = hovering
         }

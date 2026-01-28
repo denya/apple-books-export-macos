@@ -29,13 +29,19 @@ struct ContentView: View {
                         systemImage: booksViewModel.isSelectionMode ? "checkmark" : "checkmark.circle"
                     )
                 }
+                .buttonStyle(.bordered)
                 .help("Toggle selection mode for export")
+                .keyboardShortcut("s", modifiers: .command)
             }
 
             ToolbarItem(placement: .primaryAction) {
                 Button(action: { showingExportPanel = true }) {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }
+                .buttonStyle(.borderedProminent)
+                .disabled(booksViewModel.selectedBookIds.isEmpty && booksViewModel.selectedAnnotationIds.isEmpty && booksViewModel.isSelectionMode)
+                .help("Export selected items")
+                .keyboardShortcut("e", modifiers: .command)
             }
         }
         .sheet(isPresented: $showingExportPanel) {

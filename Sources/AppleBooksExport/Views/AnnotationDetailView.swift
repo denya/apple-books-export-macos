@@ -43,6 +43,10 @@ struct AnnotationDetailView: View {
                     Text("No annotations")
                         .font(.headline)
                 }
+                .padding(24)
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {

@@ -52,12 +52,16 @@ struct AllAnnotationsView: View {
                         }
                         .menuStyle(.borderlessButton)
                         .fixedSize()
+                        .accessibilityLabel("Sort highlights")
+                        .accessibilityHint("Current sort: \(viewModel.highlightSort.rawValue)")
                     }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
-            .background(Color(nsColor: .controlBackgroundColor))
+            .background(.thinMaterial)
+            .cornerRadius(8)
+            .padding(.horizontal)
 
             Divider()
 
@@ -73,6 +77,10 @@ struct AllAnnotationsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                .padding(24)
+                .background(.ultraThinMaterial)
+                .cornerRadius(12)
+                .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
@@ -97,6 +105,10 @@ struct AllAnnotationsView: View {
                                             .foregroundStyle(.secondary)
                                     }
                                     .padding(.vertical, 4)
+                                    .padding(.horizontal, 8)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .background(.ultraThinMaterial)
+                                    .cornerRadius(6)
                                 }
                             }
                         }

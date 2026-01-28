@@ -1,205 +1,261 @@
-# Apple Books Export - macOS App
+# Apple Books Export for macOS
 
-A native macOS application for exporting highlights, bookmarks, and notes from Apple Books.
+A native macOS application to export your Apple Books library, including highlights, bookmarks, and personal notes.
 
 ## Features
 
-- 📚 Browse all books with annotations from Apple Books
-- 🔍 Search and filter by book title, author, type, and color
-- ✅ Select specific books and annotations to export
-- 📤 Export to multiple formats:
-  - **HTML** - Self-contained with search functionality and dark mode
-  - **Markdown** - With YAML frontmatter and emoji indicators
-  - **JSON** - Structured data with metadata
-  - **CSV** - Spreadsheet-compatible format
-- 🎨 Color-coded annotations (yellow, green, blue, pink, purple, underline)
-- 🚀 Fast and native (built with SwiftUI and Swift Package Manager)
+- 📚 Browse all books in your Apple Books library
+- 🔍 Search and filter annotations by color, type, and book
+- ✅ Select specific books or annotations for export
+- 📤 Export to multiple formats: HTML, Markdown, JSON, CSV
+- 🌓 Dark mode support (HTML exports)
+- 🎨 Color-coded highlights matching Apple Books styles
+- ⌨️ Full keyboard navigation and accessibility support
+- 🖥️ Native macOS design with modern materials and effects
+
+## Download
+
+### Latest Build
+Download the latest version: [Apple Books Export - Latest](https://github.com/denya/apple-books-export-macos/releases/latest/download/AppleBooksExport.dmg)
+
+### Tagged Releases
+View all releases: [Releases Page](https://github.com/denya/apple-books-export-macos/releases)
 
 ## Requirements
 
+- macOS 14.0 (Sonoma) or later
+- Apple Books with existing library and annotations
+
+## Installation
+
+1. Download the DMG file from the link above
+2. Open the DMG file
+3. Drag Apple Books Export to your Applications folder
+4. Launch the app
+5. On first launch, right-click the app and select "Open" (macOS Gatekeeper requirement for unsigned apps)
+6. The app will automatically locate your Apple Books databases
+
+## How It Works
+
+Apple Books Export reads directly from Apple Books' SQLite databases:
+- **Annotations:** `~/Library/Containers/com.apple.iBooksX/Data/Documents/AEAnnotation/`
+- **Library:** `~/Library/Containers/com.apple.iBooksX/Data/Documents/BKLibrary/`
+
+The app uses [GRDB.swift](https://github.com/groue/GRDB.swift) for efficient database access and maintains a read-only connection to your Apple Books data.
+
+## Export Formats
+
+### HTML
+Self-contained HTML file with:
+- Built-in search functionality
+- Dark mode toggle
+- Styled annotation cards
+- Color-coded highlights
+- Responsive design
+
+### Markdown
+Clean markdown format with:
+- YAML frontmatter with metadata
+- Hierarchical structure by book
+- Annotation metadata (color, type, location)
+- Easy to import into note-taking apps
+
+### JSON
+Structured data export for programmatic use:
+- Complete annotation metadata
+- Book information
+- Creation and modification timestamps
+- Suitable for data analysis or custom processing
+
+### CSV
+Spreadsheet-compatible format for data analysis:
+- One row per annotation
+- All metadata fields included
+- Compatible with Excel, Numbers, Google Sheets
+- Easy filtering and sorting
+
+## Usage
+
+### Basic Workflow
+
+1. **Browse Books:** View all books in your Apple Books library in the sidebar
+2. **Search & Filter:** Use the search bar and color filters to find specific annotations
+3. **Select Content:**
+   - Click "Select" to enter selection mode
+   - Choose individual books or annotations
+   - Use "All books" to work with all annotations
+4. **Export:** Click "Export" and choose your format
+5. **Save:** Choose a destination and filename for your export
+
+### Keyboard Shortcuts
+
+- **⌘A** - Select All (in selection mode)
+- **⌘E** - Export selected items
+- **⌘F** - Focus search field
+- **⌘W** - Close window
+- **⌘Q** - Quit application
+
+### Selection Modes
+
+- **Select Books:** Choose one or more books to export all their annotations
+- **Select Annotations:** Choose specific annotations across multiple books
+- **All Books Mode:** View and filter all annotations across your entire library
+
+## Privacy
+
+This application runs entirely on your local machine. No data is sent to external servers. All database reads are performed locally, and your Apple Books data never leaves your Mac.
+
+## Building from Source
+
+### Prerequisites
+
 - macOS 14.0 or later
-- Apple Books with at least one highlighted book
+- Xcode 15.0 or later
+- Swift 5.9 or later
 
-## Development
-
-### Quick Start
+### Build Instructions
 
 ```bash
-# Build and run
-APP_NAME=AppleBooksExport \
-BUNDLE_ID=com.applebooksexport.macos \
-Scripts/compile_and_run.sh
+# Clone the repository
+git clone https://github.com/denya/apple-books-export-macos.git
+cd apple-books-export-macos
 
-# Just build
-swift build
+# Build with Swift Package Manager
+swift build -c release
 
-# Run tests
-swift test
+# Or open in Xcode
+open Package.swift
 ```
 
-### Project Structure
+### Universal Binary
+
+To build a universal binary (Intel + Apple Silicon):
+
+```bash
+# Build for Intel
+swift build -c release --arch x86_64
+
+# Build for Apple Silicon
+swift build -c release --arch arm64
+
+# Create universal binary
+lipo -create \
+  .build/x86_64-apple-macosx/release/AppleBooksExport \
+  .build/arm64-apple-macosx/release/AppleBooksExport \
+  -output AppleBooksExport-universal
+
+# Verify architectures
+lipo -info AppleBooksExport-universal
+```
+
+## Project Structure
 
 ```
 apple-books-export-macos/
-├── Package.swift              # SPM manifest
-├── version.env                # Version configuration
 ├── Sources/
 │   └── AppleBooksExport/
-│       ├── Models/            # Data models
-│       ├── ViewModels/        # Business logic
-│       ├── Views/             # SwiftUI views
-│       ├── Database/          # SQLite access with GRDB
-│       ├── Exporters/         # HTML, Markdown, JSON, CSV
-│       └── main.swift         # App entry point
-└── Scripts/
-    ├── compile_and_run.sh     # Dev loop: build + launch
-    ├── package_app.sh         # Create .app bundle
-    └── sign-and-notarize.sh   # Distribution build
-```
-
-### Build Scripts
-
-- **`compile_and_run.sh`** - Fast development loop: kills old app, rebuilds, launches
-- **`package_app.sh`** - Creates signed `.app` bundle for distribution
-- **`sign-and-notarize.sh`** - Notarizes for public distribution
-
-### Environment Variables
-
-```bash
-export APP_NAME="AppleBooksExport"
-export BUNDLE_ID="com.applebooksexport.macos"
-export MACOS_MIN_VERSION="14.0"
-export ARCHES="arm64 x86_64"  # Universal binary
-export SIGNING_MODE="adhoc"    # or set APP_IDENTITY for release
+│       ├── App/                    # Application entry point
+│       ├── Views/                  # SwiftUI views
+│       ├── ViewModels/            # View models (MVVM)
+│       ├── Models/                # Data models
+│       ├── Database/              # Database access layer
+│       └── Export/                # Export formatters
+├── Package.swift                  # Swift Package Manager manifest
+└── README.md
 ```
 
 ## Architecture
 
-### Data Flow
+The app follows a clean MVVM (Model-View-ViewModel) architecture:
 
-1. **AppleBooksDatabase** queries SQLite databases:
-   - `~/Library/Containers/com.apple.iBooksX/Data/Documents/AEAnnotation/*.sqlite`
-   - `~/Library/Containers/com.apple.iBooksX/Data/Documents/BKLibrary/*.sqlite`
+- **Models:** Pure data structures representing books, annotations, and export configurations
+- **Database Layer:** GRDB.swift-based data access with type-safe queries
+- **ViewModels:** Business logic, state management, and coordination
+- **Views:** SwiftUI views with accessibility support and modern materials
 
-2. **BooksViewModel** manages UI state:
-   - Book selection
-   - Annotation filtering
-   - Search
+## Accessibility
 
-3. **ExportViewModel** handles export:
-   - Format selection
-   - File save panel
-   - Progress tracking
+Apple Books Export is designed with accessibility in mind:
 
-4. **Exporters** generate output:
-   - HTMLExporter - Self-contained HTML with search
-   - MarkdownExporter - YAML frontmatter + markdown
-   - JSONExporter - Structured JSON
-   - CSVExporter - Denormalized CSV rows
+- Full VoiceOver support with descriptive labels
+- Dynamic Type support (scales with system text size)
+- Keyboard navigation throughout the app
+- High contrast mode support
+- Reduce Motion support
+- Color-blind friendly design (color + text labels)
 
-### Database Schema
+## Technology Stack
 
-Apple Books uses Core Data with SQLite. Key tables:
+- **SwiftUI** - Modern declarative UI framework
+- **GRDB.swift** - Efficient SQLite database access
+- **Swift Package Manager** - Dependency management
+- **macOS Materials** - Native translucent effects
+- **Combine** - Reactive programming for state management
 
-- **ZAEANNOTATION** - Annotations (highlights, bookmarks, notes)
-  - `ZANNOTATIONSELECTEDTEXT` - Highlighted text
-  - `ZANNOTATIONNOTE` - User note
-  - `ZANNOTATIONSTYLE` - Color code (0-5)
-  - `ZANNOTATIONCREATIONDATE` - Apple epoch timestamp
+## Known Limitations
 
-- **ZBKLIBRARYASSET** - Book metadata
-  - `ZTITLE` - Book title
-  - `ZAUTHOR` - Book author
-  - `ZGENRE` - Book genre
+- The app requires Apple Books to be installed and have an existing library
+- Annotations are read-only (the app does not modify your Apple Books data)
+- Some PDF annotations may not include page numbers if not available in the database
+- Deleted books may still appear if their annotations remain in the database
 
-### Date Conversion
+## Contributing
 
-Apple uses epoch of 2001-01-01 (not Unix epoch). Convert with:
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-```swift
-let unixTimestamp = appleTimestamp + 978307200
-```
+### Development Setup
 
-### Annotation Style Mapping
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (if available)
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
-```
-0 → Underline
-1 → Green
-2 → Blue
-3 → Yellow (default)
-4 → Pink
-5 → Purple
-```
+### Code Style
 
-## Distribution
-
-### Ad-hoc Signing (Local Testing)
-
-```bash
-SIGNING_MODE=adhoc \
-ARCHES="arm64 x86_64" \
-Scripts/package_app.sh release
-```
-
-### Developer ID Signing (Public Distribution)
-
-```bash
-# Set credentials
-export APP_IDENTITY="Developer ID Application: Your Name (TEAM_ID)"
-export APP_STORE_CONNECT_API_KEY_P8="/path/to/AuthKey_KEYID.p8"
-export APP_STORE_CONNECT_KEY_ID="YOUR_KEY_ID"
-export APP_STORE_CONNECT_ISSUER_ID="YOUR_ISSUER_ID"
-
-# Build and notarize
-ARCHES="arm64 x86_64" Scripts/package_app.sh release
-Scripts/sign-and-notarize.sh
-```
-
-Creates: `AppleBooksExport-1.0.0.zip` (notarized and stapled)
-
-### GitHub Release
-
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-
-gh release create v1.0.0 AppleBooksExport-1.0.0.zip \
-  --title "Apple Books Export 1.0.0" \
-  --notes "Initial release"
-```
-
-## Troubleshooting
-
-### No databases found
-
-Make sure you've highlighted at least one book in Apple Books. The databases are only created after you make your first annotation.
-
-### Build fails with "No such module 'GRDB'"
-
-```bash
-swift package resolve
-swift build
-```
-
-### App doesn't launch
-
-```bash
-# Check for running instances
-pkill -9 AppleBooksExport
-
-# Rebuild
-Scripts/compile_and_run.sh
-```
-
-### Permissions error reading databases
-
-The app uses App Sandbox with `com.apple.security.files.user-selected.read-write` entitlement. Databases are in your home directory, which should be accessible.
-
-## Related Projects
-
-- [apple-books-export](../apple-books-export/) - TypeScript CLI version
-- [GRDB.swift](https://github.com/groue/GRDB.swift) - SQLite toolkit
+- Follow Swift API Design Guidelines
+- Use SwiftLint for code style consistency
+- Add accessibility labels to all interactive elements
+- Test with VoiceOver and Dynamic Type
 
 ## License
 
-MIT
+MIT License - See [LICENSE](LICENSE) file for details
+
+## Acknowledgments
+
+- Built with [GRDB.swift](https://github.com/groue/GRDB.swift) by Gwendal Roué
+- Uses Apple Books' public database structure (undocumented but stable)
+- Inspired by the need to preserve and analyze reading highlights
+- Thanks to the Apple Books team for creating a robust annotation system
+
+## Support
+
+If you encounter any issues or have questions:
+
+1. Check the [Issues](https://github.com/denya/apple-books-export-macos/issues) page for existing reports
+2. Create a new issue with:
+   - macOS version
+   - App version
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Relevant error messages or screenshots
+
+## Roadmap
+
+Future improvements planned:
+
+- [ ] Export templates customization
+- [ ] Batch export automation
+- [ ] Statistics dashboard (most highlighted books, reading patterns)
+- [ ] iCloud sync support (for sharing exports across devices)
+- [ ] PDF export format
+- [ ] Annotation search across all books
+- [ ] Tag-based organization
+- [ ] Integration with note-taking apps (Obsidian, Notion, etc.)
+
+---
+
+**Note:** This is an unofficial third-party application. It is not affiliated with, endorsed by, or sponsored by Apple Inc.

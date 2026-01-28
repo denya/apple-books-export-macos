@@ -51,6 +51,7 @@ struct FilterControlsView: View {
                     }
                     .buttonStyle(.link)
                     .font(.caption)
+                    .accessibilityLabel("Clear all color filters")
                 }
             }
         }
@@ -61,6 +62,7 @@ struct ColorFilterButton: View {
     let color: AnnotationColor
     let isSelected: Bool
     let action: () -> Void
+    @State private var isHovering = false
 
     var body: some View {
         Button(action: action) {
@@ -71,8 +73,17 @@ struct ColorFilterButton: View {
                     Circle()
                         .strokeBorder(Color.primary, lineWidth: isSelected ? 2 : 0)
                 )
+                .scaleEffect(isHovering ? 1.2 : 1.0)
+                .animation(.easeInOut(duration: 0.15), value: isHovering)
         }
         .buttonStyle(.plain)
+        .frame(minWidth: 20, minHeight: 20)
+        .accessibilityLabel("Filter by \(color.displayName)")
+        .accessibilityValue(isSelected ? "selected" : "not selected")
+        .accessibilityAddTraits(.isButton)
         .help(color.displayName)
+        .onHover { hovering in
+            isHovering = hovering
+        }
     }
 }
