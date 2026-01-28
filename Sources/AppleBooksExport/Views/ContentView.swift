@@ -5,7 +5,6 @@ struct ContentView: View {
     @StateObject private var exportViewModel = ExportViewModel()
     @State private var selectedBookId: String?
     @State private var showingExportPanel = false
-    @State private var showAllAnnotations = true
 
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
@@ -15,33 +14,28 @@ struct ContentView: View {
             )
             .navigationSplitViewColumnWidth(min: 300, ideal: 400, max: 600)
         } detail: {
-            if showAllAnnotations {
-                AllAnnotationsView(viewModel: booksViewModel)
-            } else if let bookId = selectedBookId,
-                      let book = booksViewModel.books.first(where: { $0.id == bookId }) {
-                AnnotationDetailView(
-                    book: book,
-                    viewModel: booksViewModel
-                )
-            } else {
-                Text("Select a book to view annotations")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-            }
+            let booksToShow = booksViewModel.getBooksForView(selectedBookId: selectedBookId)
+            AllAnnotationsView(
+                viewModel: booksViewModel,
+                books: booksToShow,
+                title: selectedBookId == nil ? "All Books" : nil
+            )
         }
         .toolbar {
             ToolbarItem(placement: .automatic) {
-                Toggle(isOn: $showAllAnnotations) {
-                    Label("All Annotations", systemImage: showAllAnnotations ? "list.bullet" : "book")
+                Button(action: { booksViewModel.toggleSelectionMode() }) {
+                    Label(
+                        booksViewModel.isSelectionMode ? "Done" : "Select",
+                        systemImage: booksViewModel.isSelectionMode ? "checkmark" : "checkmark.circle"
+                    )
                 }
-                .help("Toggle between all annotations view and single book view")
+                .help("Toggle selection mode for export")
             }
 
             ToolbarItem(placement: .primaryAction) {
                 Button(action: { showingExportPanel = true }) {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }
-                .disabled(booksViewModel.selectedBookIds.isEmpty)
             }
         }
         .sheet(isPresented: $showingExportPanel) {

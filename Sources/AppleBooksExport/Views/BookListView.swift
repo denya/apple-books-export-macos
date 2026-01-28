@@ -25,13 +25,6 @@ struct BookListView: View {
 
             Divider()
 
-            // Filter controls
-            FilterControlsView(viewModel: viewModel)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-
-            Divider()
-
             // Books list
             if viewModel.isLoading {
                 ProgressView("Loading books...")
@@ -68,34 +61,52 @@ struct BookListView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List(viewModel.filteredBooks, selection: $selectedBookId) { book in
-                    BookRowView(book: book, viewModel: viewModel)
-                        .tag(book.id)
+                List(selection: $selectedBookId) {
+                    // "All books" item
+                    HStack(spacing: 8) {
+                        Image(systemName: "book.fill")
+                            .foregroundStyle(.blue)
+                        Text("All Books")
+                            .font(.body)
+                            .fontWeight(.semibold)
+                    }
+                    .tag(nil as String?)
+                    .padding(.vertical, 2)
+
+                    Divider()
+
+                    // Individual books
+                    ForEach(viewModel.filteredBooks) { book in
+                        BookRowView(book: book, viewModel: viewModel)
+                            .tag(book.id as String?)
+                    }
                 }
                 .listStyle(.sidebar)
             }
 
             Divider()
 
-            // Selection controls
-            HStack {
-                Text("\(viewModel.selectedBookIds.count) selected")
+            // Selection controls (only in selection mode)
+            if viewModel.isSelectionMode {
+                HStack {
+                    Text("\(viewModel.selectedBookIds.count) selected")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Select All") {
+                        viewModel.selectAll()
+                    }
+                    .buttonStyle(.link)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("Select All") {
-                    viewModel.selectAll()
+                    Button("Deselect All") {
+                        viewModel.deselectAll()
+                    }
+                    .buttonStyle(.link)
+                    .font(.caption)
                 }
-                .buttonStyle(.link)
-                .font(.caption)
-                Button("Deselect All") {
-                    viewModel.deselectAll()
-                }
-                .buttonStyle(.link)
-                .font(.caption)
+                .padding(8)
+                .background(Color(nsColor: .controlBackgroundColor))
             }
-            .padding(8)
-            .background(Color(nsColor: .controlBackgroundColor))
         }
         .navigationTitle("Books (\(viewModel.filteredBooks.count))")
     }

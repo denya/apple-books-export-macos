@@ -10,11 +10,14 @@ struct AnnotationRowView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            Button(action: { viewModel.toggleAnnotationSelection(annotation.id) }) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? .blue : .secondary)
+            // Only show checkbox in selection mode
+            if viewModel.isSelectionMode {
+                Button(action: { viewModel.toggleAnnotationSelection(annotation.id) }) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(isSelected ? .blue : .secondary)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 8) {
                 // Header with color, type, and location

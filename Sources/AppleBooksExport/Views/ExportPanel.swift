@@ -36,10 +36,13 @@ struct ExportPanel: View {
                 Text("Export Summary")
                     .font(.headline)
 
+                let bookCount = booksViewModel.isSelectionMode ? booksViewModel.selectedBookIds.count : booksViewModel.filteredBooks.count
+                let highlightCount = booksViewModel.isSelectionMode ? booksViewModel.selectedAnnotationCount : booksViewModel.totalAnnotationCount
+
                 HStack {
-                    Label("\(booksViewModel.selectedBookIds.count) books", systemImage: "book")
+                    Label("\(bookCount) books", systemImage: "book")
                     Spacer()
-                    Label("\(booksViewModel.selectedAnnotationCount) annotations", systemImage: "note.text")
+                    Label("\(highlightCount) highlights", systemImage: "highlighter")
                 }
                 .font(.body)
                 .foregroundStyle(.secondary)
@@ -84,7 +87,14 @@ struct ExportPanel: View {
 
     private func performExport() async {
         do {
-            let books = booksViewModel.selectedBooksWithFilteredAnnotations
+            let books: [Book]
+            if booksViewModel.isSelectionMode {
+                books = booksViewModel.selectedBooksWithFilteredAnnotations
+            } else {
+                // Export all books if not in selection mode
+                books = booksViewModel.filteredBooks
+            }
+
             _ = try await exportViewModel.export(
                 books: books,
                 format: exportViewModel.selectedFormat

@@ -36,6 +36,10 @@ class ExportViewModel: ObservableObject {
         }
     }
 
+    func exportAll(allBooks: [Book], format: ExportFormat) async throws -> URL {
+        return try await export(books: allBooks, format: format)
+    }
+
     func export(books: [Book], format: ExportFormat) async throws -> URL {
         isExporting = true
         exportProgress = 0

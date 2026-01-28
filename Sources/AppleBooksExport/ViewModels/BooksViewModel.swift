@@ -9,6 +9,7 @@ class BooksViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var isSelectionMode: Bool = false
 
     // Filters
     @Published var showHighlights: Bool = true
@@ -96,8 +97,10 @@ class BooksViewModel: ObservableObject {
 
             self.books = loadedBooks
 
-            // Select all books by default
-            self.selectedBookIds = Set(loadedBooks.map { $0.id })
+            // In selection mode, select all books by default
+            if self.isSelectionMode {
+                self.selectedBookIds = Set(loadedBooks.map { $0.id })
+            }
         } catch {
             self.errorMessage = error.localizedDescription
         }
@@ -106,6 +109,7 @@ class BooksViewModel: ObservableObject {
     }
 
     func toggleBookSelection(_ id: String) {
+        guard isSelectionMode else { return }
         if selectedBookIds.contains(id) {
             selectedBookIds.remove(id)
             // Also deselect annotations from this book
@@ -117,6 +121,32 @@ class BooksViewModel: ObservableObject {
         } else {
             selectedBookIds.insert(id)
         }
+    }
+
+    func toggleSelectionMode() {
+        isSelectionMode.toggle()
+        if isSelectionMode {
+            // When entering selection mode, select all by default
+            selectedBookIds = Set(books.map { $0.id })
+        } else {
+            // Clear selection when exiting
+            selectedBookIds.removeAll()
+            selectedAnnotationIds.removeAll()
+        }
+    }
+
+    func getBooksForView(selectedBookId: String?) -> [Book] {
+        guard let selectedBookId = selectedBookId else {
+            // "All books" selected - return all filtered books
+            return filteredBooks
+        }
+
+        // Single book selected
+        if let book = filteredBooks.first(where: { $0.id == selectedBookId }) {
+            return [book]
+        }
+
+        return []
     }
 
     func toggleAnnotationSelection(_ id: Int) {

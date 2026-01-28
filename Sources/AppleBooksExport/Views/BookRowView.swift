@@ -10,18 +10,21 @@ struct BookRowView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Button(action: { viewModel.toggleBookSelection(book.id) }) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? .blue : .secondary)
+            // Only show checkbox in selection mode
+            if viewModel.isSelectionMode {
+                Button(action: { viewModel.toggleBookSelection(book.id) }) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(isSelected ? .blue : .secondary)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
-            HStack(spacing: 0) {
+            HStack(spacing: 6) {
                 Text(book.displayTitle)
                     .font(.body)
                     .lineLimit(1)
 
-                Text(" - ")
+                Text("-")
                     .foregroundStyle(.secondary)
 
                 Text(book.displayAuthor)
@@ -29,13 +32,17 @@ struct BookRowView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
 
-                Text(" - ")
-                    .foregroundStyle(.secondary)
+                Spacer()
 
-                Text("\(book.annotationCount) quotes")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                // Small badge for quote count
+                Text("\(book.annotationCount)")
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.blue.opacity(0.8))
+                    .cornerRadius(8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
