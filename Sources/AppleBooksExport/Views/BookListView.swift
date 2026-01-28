@@ -25,6 +25,44 @@ struct BookListView: View {
 
             Divider()
 
+            // Sort and Filter controls
+            HStack(spacing: 8) {
+                Menu {
+                    ForEach(BookSortOption.allCases) { option in
+                        Button(action: { viewModel.bookSort = option }) {
+                            HStack {
+                                Text(option.rawValue)
+                                if viewModel.bookSort == option {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Sort", systemImage: "arrow.up.arrow.down")
+                        .font(.caption)
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+
+                Button(action: { viewModel.showFilters.toggle() }) {
+                    Label("Filters", systemImage: viewModel.showFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                        .font(.caption)
+                }
+                .buttonStyle(.borderless)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color(nsColor: .controlBackgroundColor))
+
+            if viewModel.showFilters {
+                FilterControlsView(viewModel: viewModel)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+            }
+
+            Divider()
+
             // Books list
             if viewModel.isLoading {
                 ProgressView("Loading books...")

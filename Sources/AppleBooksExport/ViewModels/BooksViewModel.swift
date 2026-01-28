@@ -10,12 +10,17 @@ class BooksViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var isSelectionMode: Bool = false
+    @Published var showFilters: Bool = false
 
     // Filters
     @Published var showHighlights: Bool = true
     @Published var showBookmarks: Bool = false
     @Published var showNotes: Bool = true
     @Published var selectedColors: Set<AnnotationColor> = []
+
+    // Sorting
+    @Published var bookSort: BookSortOption = .title
+    @Published var highlightSort: HighlightSortOption = .book
 
     private var database: AppleBooksDatabase?
 
@@ -53,7 +58,51 @@ class BooksViewModel: ObservableObject {
             return filteredBook
         }
 
+        // Sort books
+        result = sortBooks(result)
+
         return result
+    }
+
+    private func sortBooks(_ books: [Book]) -> [Book] {
+        switch bookSort {
+        case .title:
+            return books.sorted { ($0.title ?? "") < ($1.title ?? "") }
+        case .author:
+            return books.sorted { ($0.author ?? "") < ($1.author ?? "") }
+        case .lastHighlightAsc:
+            return books.sorted { book0, book1 in
+                let date0 = book0.annotations.map { $0.createdAt }.max() ?? Date.distantPast
+                let date1 = book1.annotations.map { $0.createdAt }.max() ?? Date.distantPast
+                return date0 < date1
+            }
+        case .lastHighlightDesc:
+            return books.sorted { book0, book1 in
+                let date0 = book0.annotations.map { $0.createdAt }.max() ?? Date.distantPast
+                let date1 = book1.annotations.map { $0.createdAt }.max() ?? Date.distantPast
+                return date0 > date1
+            }
+        }
+    }
+
+    func sortedHighlights(for books: [Book]) -> [(book: Book, annotation: Annotation)] {
+        var highlights: [(book: Book, annotation: Annotation)] = []
+
+        for book in books {
+            for annotation in book.annotations {
+                highlights.append((book: book, annotation: annotation))
+            }
+        }
+
+        switch highlightSort {
+        case .book:
+            // Already sorted by book
+            return highlights
+        case .dateAsc:
+            return highlights.sorted { $0.annotation.createdAt < $1.annotation.createdAt }
+        case .dateDesc:
+            return highlights.sorted { $0.annotation.createdAt > $1.annotation.createdAt }
+        }
     }
 
     var selectedBooks: [Book] {

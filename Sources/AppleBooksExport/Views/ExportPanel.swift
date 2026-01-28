@@ -75,7 +75,7 @@ struct ExportPanel: View {
             }
         }
         .padding(20)
-        .frame(width: 500, height: 300)
+        .frame(width: 500, height: 350)
         .alert("Export Error", isPresented: $showingError) {
             Button("OK") {
                 showingError = false

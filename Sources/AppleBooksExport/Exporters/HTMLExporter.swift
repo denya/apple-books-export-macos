@@ -2,292 +2,563 @@ import Foundation
 
 struct HTMLExporter {
     static func export(books: [Book]) -> String {
-        let totalAnnotations = books.reduce(0) { $0 + $1.annotationCount }
+        let totalHighlights = books.reduce(0) { $0 + $1.annotationCount }
+        let totalBooks = books.count
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        let exportDate = dateFormatter.string(from: Date())
 
         var html = """
         <!DOCTYPE html>
         <html lang="en">
         <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Apple Books Export</title>
-            <style>
-                :root {
-                    --color-bg: #ffffff;
-                    --color-text: #1a1a1a;
-                    --color-secondary: #666666;
-                    --color-border: #e0e0e0;
-                    --color-highlight: #f5f5f5;
-                    --color-yellow: #ffd60a;
-                    --color-green: #32d74b;
-                    --color-blue: #0a84ff;
-                    --color-pink: #ff375f;
-                    --color-purple: #bf5af2;
-                    --color-underline: #8e8e93;
-                }
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Apple Books Highlights</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+          <style>
+            * {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
 
-                @media (prefers-color-scheme: dark) {
-                    :root {
-                        --color-bg: #1a1a1a;
-                        --color-text: #f5f5f5;
-                        --color-secondary: #aeaeb2;
-                        --color-border: #3a3a3c;
-                        --color-highlight: #2c2c2e;
-                    }
-                }
+            :root {
+              --bg-page: #faf8f5;
+              --bg-card: #ffffff;
+              --bg-sidebar: #f5f3f0;
+              --bg-hover: #f0ede8;
+              --text-primary: #2c2c2c;
+              --text-secondary: #6b6b6b;
+              --text-tertiary: #999999;
+              --accent-primary: #d4a574;
+              --border-color: #e8e5e0;
+              --dot-yellow: #ffc107;
+              --dot-green: #4caf50;
+              --dot-blue: #2196f3;
+              --dot-pink: #e91e63;
+              --dot-purple: #9c27b0;
+              --dot-underline: #757575;
+            }
 
-                * {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+              font-size: 1.0625rem;
+              line-height: 1.7;
+              color: var(--text-primary);
+              background: var(--bg-page);
+              margin: 0;
+              padding: 0;
+            }
 
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-                    background: var(--color-bg);
-                    color: var(--color-text);
-                    line-height: 1.6;
-                    padding: 20px;
-                }
+            .header {
+              position: sticky;
+              top: 0;
+              background: var(--bg-card);
+              border-bottom: 1px solid var(--border-color);
+              padding: 1.5rem 2rem;
+              z-index: 100;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            }
 
-                .container {
-                    max-width: 900px;
-                    margin: 0 auto;
-                }
+            .header-content {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 1rem;
+            }
 
-                header {
-                    text-align: center;
-                    padding: 40px 0;
-                    border-bottom: 2px solid var(--color-border);
-                    margin-bottom: 40px;
-                }
+            .header h1 {
+              font-family: 'Crimson Text', Georgia, serif;
+              font-size: 2.5rem;
+              font-weight: 600;
+              color: var(--text-primary);
+              letter-spacing: -0.02em;
+            }
 
-                h1 {
-                    font-size: 2.5rem;
-                    font-weight: 700;
-                    margin-bottom: 10px;
-                }
+            .header-actions {
+              display: flex;
+              gap: 0.75rem;
+              align-items: center;
+            }
 
-                .subtitle {
-                    font-size: 1.1rem;
-                    color: var(--color-secondary);
-                }
+            .expand-all-btn {
+              padding: 0.5rem 1rem;
+              font-size: 0.9375rem;
+              font-family: inherit;
+              background: transparent;
+              border: 1px solid var(--border-color);
+              border-radius: 6px;
+              color: var(--text-secondary);
+              cursor: pointer;
+              transition: all 0.2s ease;
+            }
 
-                .search-container {
-                    margin-bottom: 30px;
-                    position: sticky;
-                    top: 20px;
-                    background: var(--color-bg);
-                    padding: 15px 0;
-                    z-index: 100;
-                }
+            .expand-all-btn:hover {
+              background: var(--bg-hover);
+              border-color: var(--accent-primary);
+              color: var(--text-primary);
+            }
 
-                .search-input {
-                    width: 100%;
-                    padding: 12px 20px;
-                    font-size: 1rem;
-                    border: 2px solid var(--color-border);
-                    border-radius: 8px;
-                    background: var(--color-bg);
-                    color: var(--color-text);
-                }
+            .search-container {
+              margin-bottom: 1rem;
+            }
 
-                .search-input:focus {
-                    outline: none;
-                    border-color: var(--color-blue);
-                }
+            .search-box {
+              width: 100%;
+              padding: 0.75rem 1rem;
+              font-size: 1rem;
+              font-family: inherit;
+              border: 1px solid var(--border-color);
+              border-radius: 8px;
+              background: var(--bg-page);
+              color: var(--text-primary);
+              transition: all 0.2s ease;
+            }
 
-                .book {
-                    margin-bottom: 60px;
-                    padding-bottom: 40px;
-                    border-bottom: 1px solid var(--color-border);
-                }
+            .search-box:focus {
+              outline: none;
+              border-color: var(--accent-primary);
+              box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+            }
 
-                .book:last-child {
-                    border-bottom: none;
-                }
+            .stats {
+              color: var(--text-tertiary);
+              font-size: 0.9375rem;
+            }
 
-                .book-header {
-                    margin-bottom: 30px;
-                }
+            .container {
+              display: flex;
+              min-height: calc(100vh - 180px);
+            }
 
-                .book-title {
-                    font-size: 2rem;
-                    font-weight: 700;
-                    margin-bottom: 8px;
-                }
+            .sidebar {
+              width: 280px;
+              background: var(--bg-sidebar);
+              border-right: 1px solid var(--border-color);
+              padding: 2rem 1.5rem;
+              overflow-y: auto;
+              position: sticky;
+              top: 180px;
+              height: calc(100vh - 180px);
+              flex-shrink: 0;
+            }
 
-                .book-author {
-                    font-size: 1.3rem;
-                    color: var(--color-secondary);
-                    margin-bottom: 8px;
-                }
+            .sidebar h3 {
+              font-family: 'Crimson Text', Georgia, serif;
+              font-size: 1.125rem;
+              font-weight: 600;
+              margin-bottom: 1rem;
+              color: var(--text-primary);
+            }
 
-                .book-meta {
-                    font-size: 0.9rem;
-                    color: var(--color-secondary);
-                }
+            .book-list {
+              list-style: none;
+            }
 
-                .annotation {
-                    margin-bottom: 30px;
-                    padding: 20px;
-                    background: var(--color-highlight);
-                    border-radius: 8px;
-                    border-left: 4px solid var(--color-border);
-                }
+            .book-list li {
+              margin-bottom: 0.5rem;
+            }
 
-                .annotation-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    margin-bottom: 12px;
-                    flex-wrap: wrap;
-                }
+            .book-link {
+              display: flex;
+              justify-content: space-between;
+              align-items: baseline;
+              padding: 0.5rem 0.75rem;
+              text-decoration: none;
+              color: var(--text-secondary);
+              border-radius: 6px;
+              transition: all 0.2s ease;
+              font-size: 0.9375rem;
+            }
 
-                .color-indicator {
-                    width: 14px;
-                    height: 14px;
-                    border-radius: 50%;
-                }
+            .book-link:hover {
+              background: var(--bg-hover);
+              color: var(--accent-primary);
+            }
 
-                .type-badge {
-                    font-size: 0.85rem;
-                    padding: 4px 10px;
-                    background: var(--color-border);
-                    border-radius: 4px;
-                    text-transform: capitalize;
-                }
+            .book-link.active {
+              background: var(--bg-card);
+              color: var(--text-primary);
+              border-left: 3px solid var(--accent-primary);
+            }
 
-                .annotation-date {
-                    font-size: 0.85rem;
-                    color: var(--color-secondary);
-                    margin-left: auto;
-                }
+            .book-title {
+              flex: 1;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              margin-right: 0.5rem;
+            }
 
-                .annotation-text {
-                    margin-bottom: 12px;
-                    line-height: 1.7;
-                }
+            .book-count {
+              font-size: 0.875rem;
+              color: var(--text-tertiary);
+            }
 
-                .annotation-note {
-                    font-style: italic;
-                    color: var(--color-secondary);
-                    padding-left: 16px;
-                    border-left: 3px solid var(--color-border);
-                }
+            main {
+              flex: 1;
+              padding: 3rem 2rem;
+              max-width: 900px;
+              margin: 0 auto;
+            }
 
-                .hidden {
-                    display: none;
-                }
+            .book {
+              background: var(--bg-card);
+              border-radius: 12px;
+              padding: 2rem;
+              margin-bottom: 2rem;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+              scroll-margin-top: 200px;
+            }
 
-                footer {
-                    text-align: center;
-                    padding: 40px 0;
-                    color: var(--color-secondary);
-                    font-size: 0.9rem;
-                }
-            </style>
+            .book:hover {
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+
+            .book-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 1.5rem;
+              cursor: pointer;
+              user-select: none;
+            }
+
+            .book-info {
+              flex: 1;
+            }
+
+            .book h2 {
+              font-family: 'Crimson Text', Georgia, serif;
+              font-size: 1.75rem;
+              font-weight: 600;
+              color: var(--text-primary);
+              margin-bottom: 0.5rem;
+              line-height: 1.3;
+            }
+
+            .author {
+              color: var(--text-secondary);
+              font-size: 1rem;
+            }
+
+            .collapse-btn {
+              background: transparent;
+              border: none;
+              cursor: pointer;
+              padding: 0.5rem;
+              color: var(--text-secondary);
+              transition: all 0.2s ease;
+              border-radius: 6px;
+            }
+
+            .collapse-btn:hover {
+              background: var(--bg-hover);
+              color: var(--text-primary);
+            }
+
+            .chevron {
+              transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .book.collapsed .chevron {
+              transform: rotate(-90deg);
+            }
+
+            .highlights {
+              overflow: hidden;
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .book.collapsed .highlights {
+              max-height: 0 !important;
+              margin-bottom: 0;
+            }
+
+            .highlight {
+              display: flex;
+              gap: 12px;
+              margin-bottom: 1.5rem;
+              padding-bottom: 1.5rem;
+              border-bottom: 1px solid var(--border-color);
+            }
+
+            .highlight:last-child {
+              border-bottom: none;
+              padding-bottom: 0;
+              margin-bottom: 0;
+            }
+
+            .color-dot {
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              flex-shrink: 0;
+              margin-top: 6px;
+            }
+
+            .color-dot.yellow {
+              background: var(--dot-yellow);
+              box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+            }
+
+            .color-dot.green {
+              background: var(--dot-green);
+              box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+            }
+
+            .color-dot.blue {
+              background: var(--dot-blue);
+              box-shadow: 0 0 8px rgba(33, 150, 243, 0.3);
+            }
+
+            .color-dot.pink {
+              background: var(--dot-pink);
+              box-shadow: 0 0 8px rgba(233, 30, 99, 0.3);
+            }
+
+            .color-dot.purple {
+              background: var(--dot-purple);
+              box-shadow: 0 0 8px rgba(156, 39, 176, 0.3);
+            }
+
+            .color-dot.underline {
+              background: var(--dot-underline);
+              box-shadow: 0 0 8px rgba(117, 117, 117, 0.3);
+            }
+
+            .highlight-content {
+              flex: 1;
+            }
+
+            .highlight-text {
+              font-size: 1.0625rem;
+              line-height: 1.7;
+              color: var(--text-primary);
+              margin-bottom: 0.5rem;
+            }
+
+            .note {
+              font-style: italic;
+              color: var(--text-secondary);
+              margin-top: 0.75rem;
+              font-size: 1rem;
+            }
+
+            .highlight-meta {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-top: 0.75rem;
+              gap: 1rem;
+            }
+
+            .location {
+              font-size: 0.875rem;
+              color: var(--text-tertiary);
+            }
+
+            time {
+              font-size: 0.875rem;
+              color: var(--text-tertiary);
+              text-align: right;
+            }
+
+            .hidden {
+              display: none;
+            }
+          </style>
         </head>
         <body>
-            <div class="container">
-                <header>
-                    <h1>📚 Apple Books Export</h1>
-                    <p class="subtitle">Exported \(totalAnnotations) annotations from \(books.count) books</p>
-                    <p class="subtitle">\(ISO8601DateFormatter().string(from: Date()))</p>
-                </header>
+          <header class="header">
+            <div class="header-content">
+              <h1>Apple Books Highlights</h1>
+              <div class="header-actions">
+                <button class="expand-all-btn">Collapse All</button>
+              </div>
+            </div>
+            <div class="search-container">
+              <input type="search" class="search-box" placeholder="Search books or highlights..." aria-label="Search" />
+            </div>
+            <div class="stats">\(totalHighlights) highlights from \(totalBooks) books • Exported \(exportDate)</div>
+          </header>
 
-                <div class="search-container">
-                    <input type="text" class="search-input" id="searchInput" placeholder="Search books and annotations...">
-                </div>
-
-                <main id="booksContainer">
+          <div class="container">
+            <aside class="sidebar">
+              <h3>Library</h3>
+              <ul class="book-list">
         """
 
-        // Add each book
+        // Sidebar book list
         for book in books {
-            guard !book.annotations.isEmpty else { continue }
-
+            let bookId = "book-\(book.assetId)"
             html += """
-                    <div class="book" data-book-id="\(book.assetId)">
+                        <li>
+                          <a href="#\(bookId)" class="book-link">
+                            <span class="book-title">\(escapeHtml(book.displayTitle))</span>
+                            <span class="book-count">\(book.annotationCount)</span>
+                          </a>
+                        </li>
+            """
+        }
+
+        html += """
+                      </ul>
+                    </aside>
+
+                    <main>
+        """
+
+        // Books
+        for book in books {
+            let bookId = "book-\(book.assetId)"
+            html += """
+                      <section id="\(bookId)" class="book">
                         <div class="book-header">
-                            <h2 class="book-title">\(escapeHtml(book.displayTitle))</h2>
-                            <p class="book-author">\(escapeHtml(book.displayAuthor))</p>
-                            <p class="book-meta">\(book.annotationCount) annotations</p>
+                          <div class="book-info">
+                            <h2>\(escapeHtml(book.displayTitle))</h2>
+                            <p class="author">by \(escapeHtml(book.displayAuthor))</p>
+                          </div>
+                          <button class="collapse-btn" aria-label="Toggle highlights">
+                            <svg class="chevron" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                          </button>
                         </div>
+                        <div class="highlights">
             """
 
+            // Highlights
             for annotation in book.annotations {
-                let colorStyle = getColorStyle(for: annotation.color)
-
-                html += """
-                        <div class="annotation">
-                            <div class="annotation-header">
-                                <div class="color-indicator" style="background-color: \(colorStyle);"></div>
-                                <span class="type-badge">\(annotation.type.rawValue)</span>
-                """
-
-                if let location = annotation.location {
-                    html += """
-                                <span class="annotation-date">\(escapeHtml(location))</span>
-                    """
-                }
-
+                let colorClass = getColorClass(for: annotation.color)
                 let dateFormatter = DateFormatter()
-                dateFormatter.dateStyle = .medium
+                dateFormatter.dateStyle = .long
+
                 html += """
-                                <span class="annotation-date">\(dateFormatter.string(from: annotation.createdAt))</span>
-                            </div>
+                          <div class="highlight">
+                            <span class="color-dot \(colorClass)"></span>
+                            <div class="highlight-content">
                 """
 
                 if let text = annotation.text, !text.isEmpty {
                     html += """
-                            <div class="annotation-text">\(escapeHtml(text))</div>
+                              <p class="highlight-text">\(escapeHtml(text))</p>
                     """
                 }
 
                 if let note = annotation.note, !note.isEmpty {
                     html += """
-                            <div class="annotation-note">\(escapeHtml(note))</div>
+                              <p class="note">\(escapeHtml(note))</p>
                     """
                 }
 
                 html += """
-                        </div>
+                              <div class="highlight-meta">
+                """
+
+                if let location = annotation.location, !location.isEmpty {
+                    html += """
+                                <span class="location">\(escapeHtml(location))</span>
+                    """
+                }
+
+                html += """
+                                <time>\(dateFormatter.string(from: annotation.createdAt))</time>
+                              </div>
+                            </div>
+                          </div>
                 """
             }
 
             html += """
-                    </div>
+                        </div>
+                      </section>
+
             """
         }
 
         html += """
-                </main>
+                    </main>
+                  </div>
 
-                <footer>
-                    <p>Generated by Apple Books Export</p>
-                </footer>
-            </div>
-
-            <script>
-                const searchInput = document.getElementById('searchInput');
-                const books = document.querySelectorAll('.book');
-
-                searchInput.addEventListener('input', (e) => {
-                    const query = e.target.value.toLowerCase();
-
-                    books.forEach(book => {
-                        const text = book.textContent.toLowerCase();
-                        if (text.includes(query)) {
-                            book.classList.remove('hidden');
-                        } else {
-                            book.classList.add('hidden');
-                        }
+                  <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                      document.querySelectorAll('.highlights').forEach(highlights => {
+                        highlights.style.maxHeight = highlights.scrollHeight + 'px';
+                      });
                     });
-                });
-            </script>
-        </body>
-        </html>
+
+                    const searchInput = document.querySelector('.search-box');
+                    let searchTimeout;
+
+                    searchInput.addEventListener('input', (e) => {
+                      clearTimeout(searchTimeout);
+                      searchTimeout = setTimeout(() => {
+                        const query = e.target.value.toLowerCase().trim();
+                        const books = document.querySelectorAll('.book');
+
+                        if (query === '') {
+                          books.forEach(book => book.classList.remove('hidden'));
+                        } else {
+                          books.forEach(book => {
+                            const text = book.textContent.toLowerCase();
+                            if (text.includes(query)) {
+                              book.classList.remove('hidden');
+                            } else {
+                              book.classList.add('hidden');
+                            }
+                          });
+                        }
+                      }, 150);
+                    });
+
+                    document.querySelectorAll('.book-header').forEach(header => {
+                      header.addEventListener('click', () => {
+                        const book = header.closest('.book');
+                        book.classList.toggle('collapsed');
+                      });
+                    });
+
+                    const expandAllBtn = document.querySelector('.expand-all-btn');
+                    let allCollapsed = false;
+
+                    expandAllBtn.addEventListener('click', () => {
+                      const books = document.querySelectorAll('.book');
+                      allCollapsed = !allCollapsed;
+
+                      books.forEach(book => {
+                        if (allCollapsed) {
+                          book.classList.add('collapsed');
+                        } else {
+                          book.classList.remove('collapsed');
+                        }
+                      });
+
+                      expandAllBtn.textContent = allCollapsed ? 'Expand All' : 'Collapse All';
+                    });
+
+                    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                      anchor.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        const target = document.querySelector(this.getAttribute('href'));
+                        if (target) {
+                          document.querySelectorAll('.book-link').forEach(link => {
+                            link.classList.remove('active');
+                          });
+                          this.classList.add('active');
+                          target.classList.remove('collapsed');
+                          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      });
+                    });
+                  </script>
+                </body>
+                </html>
         """
 
         return html
@@ -302,14 +573,14 @@ struct HTMLExporter {
             .replacingOccurrences(of: "'", with: "&#39;")
     }
 
-    private static func getColorStyle(for color: AnnotationColor) -> String {
+    private static func getColorClass(for color: AnnotationColor) -> String {
         switch color {
-        case .yellow: return "#ffd60a"
-        case .green: return "#32d74b"
-        case .blue: return "#0a84ff"
-        case .pink: return "#ff375f"
-        case .purple: return "#bf5af2"
-        case .underline: return "#8e8e93"
+        case .yellow: return "yellow"
+        case .green: return "green"
+        case .blue: return "blue"
+        case .pink: return "pink"
+        case .purple: return "purple"
+        case .underline: return "underline"
         }
     }
 }

@@ -30,6 +30,29 @@ struct AllAnnotationsView: View {
                     Label("\(totalHighlights) highlights", systemImage: "highlighter")
                         .font(.body)
                         .foregroundStyle(.secondary)
+
+                    Spacer()
+
+                    // Sort menu for highlights
+                    if books.count > 0 {
+                        Menu {
+                            ForEach(HighlightSortOption.allCases) { option in
+                                Button(action: { viewModel.highlightSort = option }) {
+                                    HStack {
+                                        Text(option.rawValue)
+                                        if viewModel.highlightSort == option {
+                                            Image(systemName: "checkmark")
+                                        }
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label("Sort", systemImage: "arrow.up.arrow.down")
+                                .font(.caption)
+                        }
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -53,25 +76,52 @@ struct AllAnnotationsView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List {
-                    ForEach(books) { book in
-                        Section {
-                            ForEach(book.annotations) { annotation in
+                    if viewModel.highlightSort == .book {
+                        // Group by book
+                        ForEach(books) { book in
+                            Section {
+                                ForEach(book.annotations) { annotation in
+                                    AnnotationRowView(
+                                        annotation: annotation,
+                                        viewModel: viewModel
+                                    )
+                                }
+                            } header: {
+                                // Only show book header if viewing multiple books
+                                if books.count > 1 {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(book.displayTitle)
+                                            .font(.headline)
+                                        Text(book.displayAuthor)
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                            }
+                        }
+                    } else {
+                        // Sort by date
+                        let sortedHighlights = viewModel.sortedHighlights(for: books)
+                        ForEach(Array(sortedHighlights.enumerated()), id: \.offset) { _, item in
+                            VStack(spacing: 4) {
+                                if books.count > 1 {
+                                    HStack {
+                                        Text(item.book.displayTitle)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                        Text("•")
+                                            .foregroundStyle(.tertiary)
+                                        Text(item.book.displayAuthor)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                }
                                 AnnotationRowView(
-                                    annotation: annotation,
+                                    annotation: item.annotation,
                                     viewModel: viewModel
                                 )
-                            }
-                        } header: {
-                            // Only show book header if viewing multiple books
-                            if books.count > 1 {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(book.displayTitle)
-                                        .font(.headline)
-                                    Text(book.displayAuthor)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(.vertical, 4)
                             }
                         }
                     }
