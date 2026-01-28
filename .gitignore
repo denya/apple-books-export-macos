@@ -22,6 +22,8 @@ DerivedData/
 *.ipa
 *.dSYM.zip
 *.dSYM
+*.dmg
+cert.p12
 
 # Build products
 *.app

@@ -4,32 +4,9 @@ struct BookListView: View {
     @ObservedObject var viewModel: BooksViewModel
     @Binding var selectedBookId: String?
 
-    var body: some View {
+    @ViewBuilder
+    private var sortAndFilterToolbar: some View {
         VStack(spacing: 0) {
-            // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
-                    .accessibilityHidden(true)
-                TextField("Search books", text: $viewModel.searchText)
-                    .textFieldStyle(.plain)
-                    .accessibilityLabel("Search books")
-                    .keyboardShortcut("f", modifiers: .command)
-                if !viewModel.searchText.isEmpty {
-                    Button(action: { viewModel.searchText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Clear search")
-                }
-            }
-            .padding(8)
-            .background(.ultraThinMaterial)
-
-            Divider()
-
-            // Sort and Filter controls
             HStack(spacing: 8) {
                 Menu {
                     ForEach(BookSortOption.allCases) { option in
@@ -69,55 +46,97 @@ struct BookListView: View {
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
             }
+        }
+    }
 
+    @ViewBuilder
+    private var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+            TextField("Search books", text: $viewModel.searchText)
+                .textFieldStyle(.plain)
+                .accessibilityLabel("Search books")
+                .keyboardShortcut("f", modifiers: .command)
+            if !viewModel.searchText.isEmpty {
+                Button(action: { viewModel.searchText = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(8)
+        .background(.ultraThinMaterial)
+    }
+
+    @ViewBuilder
+    private var errorView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+            Text("Error")
+                .font(.headline)
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            Button("Try Again") {
+                Task {
+                    await viewModel.loadBooks()
+                }
+            }
+        }
+        .padding(24)
+        .background(.red.opacity(0.05))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(.red.opacity(0.3), lineWidth: 1)
+        )
+        .cornerRadius(12)
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    @ViewBuilder
+    private var emptyView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "book")
+                .font(.system(size: 40))
+                .foregroundStyle(.secondary)
+            Text("No books found")
+                .font(.headline)
+            Text("Try adjusting your filters or search")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(24)
+        .background(.ultraThinMaterial)
+        .cornerRadius(12)
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            searchBar
+            Divider()
+            sortAndFilterToolbar
             Divider()
 
             // Books list
             if viewModel.isLoading {
                 ProgressView("Loading books...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = viewModel.errorMessage {
-                VStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.secondary)
-                    Text("Error")
-                        .font(.headline)
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                    Button("Try Again") {
-                        Task {
-                            await viewModel.loadBooks()
-                        }
-                    }
-                }
-                .padding(24)
-                .background(.red.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(.red.opacity(0.3), lineWidth: 1)
-                )
-                .cornerRadius(12)
-                .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if viewModel.errorMessage != nil {
+                errorView
             } else if viewModel.filteredBooks.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "book")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.secondary)
-                    Text("No books found")
-                        .font(.headline)
-                    Text("Try adjusting your filters or search")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(24)
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
-                .padding()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                emptyView
             } else {
                 List(selection: $selectedBookId) {
                     // "All books" item
@@ -135,14 +154,8 @@ struct BookListView: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .listRowBackground(selectedBookId == nil ?
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(.blue.opacity(0.15))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .strokeBorder(.blue.opacity(0.3), lineWidth: 1)
-                            )
-                        : Color.clear
+                    .listRowBackground(
+                        selectedBookId == nil ? Color.blue.opacity(0.15) : Color.clear
                     )
                     .padding(.vertical, 2)
 

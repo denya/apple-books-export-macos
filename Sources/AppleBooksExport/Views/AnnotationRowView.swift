@@ -76,7 +76,7 @@ struct AnnotationRowView: View {
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
         }
-        .background(.quaternary)
+        .background(Color(nsColor: .quaternaryLabelColor).opacity(0.1))
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
