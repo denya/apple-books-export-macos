@@ -8,6 +8,15 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+ROOT=$(cd "$(dirname "$0")/.." && pwd)
+cd "$ROOT"
+
+# Load shared env config if present
+if [ -f "$ROOT/version.env" ]; then
+    # shellcheck disable=SC1090
+    source "$ROOT/version.env"
+fi
+
 echo -e "${GREEN}=====================================${NC}"
 echo -e "${GREEN}Apple Books Export - Sign & Notarize${NC}"
 echo -e "${GREEN}=====================================${NC}"
@@ -77,8 +86,13 @@ fi
 IDENTITY_NAME=$(security find-identity -v -p codesigning "$KEYCHAIN_NAME" | grep "$IDENTITY" | sed 's/.*"\(.*\)"/\1/')
 echo -e "${GREEN}✓ Found: $IDENTITY_NAME${NC}"
 
-# Step 4: Extract Team ID
-TEAM_ID=$(security find-certificate -a -c "$IDENTITY_NAME" "$KEYCHAIN_NAME" -p | openssl x509 -noout -text | grep "OU=" | head -1 | sed 's/.*OU=\([^,]*\).*/\1/' | tr -d ' ')
+# Step 4: Extract Team ID (allow env override)
+TEAM_ID="${APPLE_TEAM_ID:-${TEAM_ID:-}}"
+if [ -z "$TEAM_ID" ]; then
+    TEAM_ID=$(security find-certificate -a -c "$IDENTITY_NAME" "$KEYCHAIN_NAME" -p | openssl x509 -noout -text | grep "OU=" | head -1 | sed 's/.*OU=\([^,]*\).*/\1/' | tr -d ' ')
+else
+    echo -e "${GREEN}✓ Using Team ID from env: $TEAM_ID${NC}"
+fi
 
 if [ -z "$TEAM_ID" ]; then
     echo -e "${YELLOW}Warning: Could not automatically extract Team ID${NC}"
