@@ -40,7 +40,7 @@ The script will:
 The script will ask for:
 
 1. **Certificate Password**: Password for cert.p12
-2. **Apple ID**: Your developer email (e.g., denya.msk@gmail.com)
+2. **Apple ID**: Your developer email (e.g., your-email@example.com)
 3. **App-Specific Password**: Generated at appleid.apple.com
 4. **Notarize Now?**: y/n (can skip and notarize manually later)
 
