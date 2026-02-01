@@ -14,12 +14,13 @@ jobs:
     runs-on: macos-15
     env:
       APP_NAME: AppleBooksExport
-      BUNDLE_ID: com.applebooksexport.macos
+      BUNDLE_ID: com.denyamsk.applebooksexportmac
       MACOS_MIN_VERSION: "14.0"
       ARCHES: "arm64 x86_64"
       CODESIGN_IDENTITY: ${{ vars.CODESIGN_IDENTITY }}
       APP_IDENTITY: ${{ vars.CODESIGN_IDENTITY }}
       NOTARY_PROFILE_NAME: ${{ vars.NOTARY_PROFILE_NAME }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
     steps:
       - name: Checkout
@@ -42,12 +43,19 @@ jobs:
       - name: Resolve Swift dependencies
         run: swift package resolve
 
-      - name: Derive version from tag
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Derive version
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          if [ -z "${VERSION:-}" ] || [ "$VERSION" = "$GITHUB_REF_NAME" ]; then
+            VERSION_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+            if [ -n "$VERSION_TAG" ]; then
+              VERSION="${VERSION_TAG#v}"
+            else
+              VERSION="0.1.0"
+            fi
+          fi
           echo "MARKETING_VERSION=$VERSION" >> "$GITHUB_ENV"
-          echo "BUILD_NUMBER=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+          echo "BUILD_NUMBER=${GITHUB_RUN_NUMBER:-1}" >> "$GITHUB_ENV"
 
       - name: Import signing certificate
         env:
@@ -148,18 +156,8 @@ jobs:
             --keychain-profile "$NOTARY_PROFILE_NAME" \
             --wait \
             --output-format json)
-          SUBMISSION_ID=$(python3 - <<'PY' "$SUBMISSION_JSON"
-import json, sys
-data = json.loads(sys.argv[1])
-print(data.get("id", ""))
-PY
-          )
-          STATUS=$(python3 - <<'PY' "$SUBMISSION_JSON"
-import json, sys
-data = json.loads(sys.argv[1])
-print(data.get("status", ""))
-PY
-          )
+          SUBMISSION_ID=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1]).get("id",""))' "$SUBMISSION_JSON")
+          STATUS=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1]).get("status",""))' "$SUBMISSION_JSON")
           if [ "$STATUS" != "Accepted" ]; then
             echo "Notarization failed with status: $STATUS" >&2
             if [ -n "$SUBMISSION_ID" ]; then
