@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   release_macos:
-    runs-on: macos-14
+    runs-on: macos-15
     env:
       APP_NAME: AppleBooksExport
       BUNDLE_ID: com.applebooksexport.macos
@@ -30,7 +30,7 @@ jobs:
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '15.4'
+          xcode-version: '26.2'
 
       - name: Resolve Swift dependencies
         run: swift package resolve

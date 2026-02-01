@@ -251,6 +251,61 @@ xcrun stapler staple AppleBooksExport.dmg
 - [App-Specific Passwords](https://support.apple.com/en-us/HT204397)
 - [Developer ID Certificates](https://developer.apple.com/support/developer-id/)
 
+## CI Setup (GitHub Actions)
+
+Use these exact names in GitHub: **Settings → Secrets and variables → Actions**.
+
+### Required Secrets
+
+1. **APPLE_CERTIFICATE_P12**
+   - Export your "Developer ID Application" certificate as `cert.p12` from Keychain Access.
+   - Base64 encode:
+     ```bash
+     base64 -i cert.p12 -o cert.p12.b64
+     ```
+   - Paste the contents of `cert.p12.b64`.
+
+2. **APPLE_CERTIFICATE_PASSWORD**
+   - The password you set when exporting `cert.p12`.
+
+3. **APPLE_API_KEY_ID**
+   - App Store Connect → Users and Access → Keys → Key ID.
+
+4. **APPLE_API_ISSUER_ID**
+   - App Store Connect → Users and Access → Keys → Issuer ID.
+
+5. **APPLE_API_PRIVATE_KEY_B64**
+   - Download the App Store Connect API key (`AuthKey_XXXX.p8`).
+   - Base64 encode:
+     ```bash
+     base64 -i AuthKey_XXXX.p8 -o AuthKey.p8.b64
+     ```
+   - Paste the contents of `AuthKey.p8.b64`.
+
+### Required Variables (non-secret)
+
+1. **CODESIGN_IDENTITY**
+   - Run:
+     ```bash
+     security find-identity -v -p codesigning
+     ```
+   - Copy the full identity string, for example:
+     `Developer ID Application: Your Name (TEAMID)`
+
+2. **NOTARY_PROFILE_NAME**
+   - Any short name (no spaces recommended), for example: `notarytool-ci`.
+
+### Triggering a Release
+
+Push a tag that starts with `v`:
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+This triggers the GitHub Actions workflow to build, sign, notarize, and publish `AppleBooksExport.dmg`.
+
 ## Summary
 
 The `sign-and-notarize.sh` script handles the complete workflow:
