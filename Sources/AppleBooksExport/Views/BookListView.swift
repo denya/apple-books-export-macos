@@ -2,7 +2,8 @@ import SwiftUI
 
 struct BookListView: View {
     @ObservedObject var viewModel: BooksViewModel
-    @Binding var selectedBookId: String?
+    @Binding var selectedBookIds: Set<String>
+    let onExportBook: (Book) -> Void
 
     @ViewBuilder
     private var sortAndFilterToolbar: some View {
@@ -138,24 +139,24 @@ struct BookListView: View {
             } else if viewModel.filteredBooks.isEmpty {
                 emptyView
             } else {
-                List(selection: $selectedBookId) {
+                List(selection: $selectedBookIds) {
                     // "All books" item
                     Button(action: {
-                        selectedBookId = nil
+                        selectedBookIds.removeAll()
                     }) {
                         HStack(spacing: 8) {
                             Image(systemName: "book.fill")
-                                .foregroundStyle(selectedBookId == nil ? .blue : .secondary)
+                                .foregroundStyle(selectedBookIds.isEmpty ? .blue : .secondary)
                             Text("All Books")
                                 .font(.body)
-                                .fontWeight(selectedBookId == nil ? .semibold : .regular)
+                                .fontWeight(selectedBookIds.isEmpty ? .semibold : .regular)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .listRowBackground(
-                        selectedBookId == nil ? Color.blue.opacity(0.15) : Color.clear
+                        selectedBookIds.isEmpty ? Color.blue.opacity(0.15) : Color.clear
                     )
                     .padding(.vertical, 2)
 
@@ -163,11 +164,12 @@ struct BookListView: View {
 
                     // Individual books
                     ForEach(viewModel.filteredBooks) { book in
-                        BookRowView(book: book, viewModel: viewModel)
-                            .tag(book.id as String?)
-                            .onTapGesture {
-                                selectedBookId = book.id
-                            }
+                        BookRowView(
+                            book: book,
+                            viewModel: viewModel,
+                            onExport: onExportBook
+                        )
+                            .tag(book.id)
                     }
                 }
                 .listStyle(.sidebar)

@@ -3,22 +3,33 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var booksViewModel = BooksViewModel()
     @StateObject private var exportViewModel = ExportViewModel()
-    @State private var selectedBookId: String?
+    @State private var selectedBookIds: Set<String> = []
     @State private var showingExportPanel = false
+    @State private var exportBooksOverride: [Book]?
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
-        NavigationSplitView(columnVisibility: .constant(.all)) {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             BookListView(
                 viewModel: booksViewModel,
-                selectedBookId: $selectedBookId
+                selectedBookIds: $selectedBookIds,
+                onExportBook: { book in
+                    if selectedBookIds.contains(book.id) {
+                        exportBooksOverride = nil
+                    } else {
+                        selectedBookIds = [book.id]
+                        exportBooksOverride = [book]
+                    }
+                    showingExportPanel = true
+                }
             )
             .navigationSplitViewColumnWidth(min: 300, ideal: 400, max: 600)
         } detail: {
-            let booksToShow = booksViewModel.getBooksForView(selectedBookId: selectedBookId)
+            let booksToShow = booksViewModel.getBooksForView(selectedBookIds: selectedBookIds)
             AllAnnotationsView(
                 viewModel: booksViewModel,
                 books: booksToShow,
-                title: selectedBookId == nil ? "All Books" : nil
+                title: selectedBookIds.isEmpty ? "All Books" : nil
             )
         }
         .toolbar {
@@ -35,7 +46,10 @@ struct ContentView: View {
             }
 
             ToolbarItem(placement: .primaryAction) {
-                Button(action: { showingExportPanel = true }) {
+                Button(action: {
+                    exportBooksOverride = nil
+                    showingExportPanel = true
+                }) {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }
                 .buttonStyle(.borderedProminent)
@@ -44,11 +58,15 @@ struct ContentView: View {
                 .keyboardShortcut("e", modifiers: .command)
             }
         }
-        .sheet(isPresented: $showingExportPanel) {
+        .sheet(isPresented: $showingExportPanel, onDismiss: {
+            exportBooksOverride = nil
+        }) {
             ExportPanel(
                 booksViewModel: booksViewModel,
                 exportViewModel: exportViewModel,
-                isPresented: $showingExportPanel
+                isPresented: $showingExportPanel,
+                booksOverride: exportBooksOverride,
+                selectedBookIdsForView: selectedBookIds
             )
         }
         .task {

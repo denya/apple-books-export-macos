@@ -206,18 +206,13 @@ class BooksViewModel: ObservableObject {
         }
     }
 
-    func getBooksForView(selectedBookId: String?) -> [Book] {
-        guard let selectedBookId = selectedBookId else {
+    func getBooksForView(selectedBookIds: Set<String>) -> [Book] {
+        guard !selectedBookIds.isEmpty else {
             // "All books" selected - return all filtered books
             return filteredBooks
         }
 
-        // Single book selected
-        if let book = filteredBooks.first(where: { $0.id == selectedBookId }) {
-            return [book]
-        }
-
-        return []
+        return filteredBooks.filter { selectedBookIds.contains($0.id) }
     }
 
     func toggleAnnotationSelection(_ id: Int) {

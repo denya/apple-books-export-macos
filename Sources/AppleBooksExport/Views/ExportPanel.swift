@@ -4,6 +4,8 @@ struct ExportPanel: View {
     @ObservedObject var booksViewModel: BooksViewModel
     @ObservedObject var exportViewModel: ExportViewModel
     @Binding var isPresented: Bool
+    let booksOverride: [Book]?
+    let selectedBookIdsForView: Set<String>
 
     @State private var showingError = false
     @State private var errorMessage = ""
@@ -36,8 +38,8 @@ struct ExportPanel: View {
                 Text("Export Summary")
                     .font(.headline)
 
-                let bookCount = booksViewModel.isSelectionMode ? booksViewModel.selectedBookIds.count : booksViewModel.filteredBooks.count
-                let highlightCount = booksViewModel.isSelectionMode ? booksViewModel.selectedAnnotationCount : booksViewModel.totalAnnotationCount
+                let bookCount = exportBooks.count
+                let highlightCount = exportBooks.reduce(0) { $0 + $1.annotationCount }
 
                 HStack {
                     Label("\(bookCount) books", systemImage: "book")
@@ -93,16 +95,8 @@ struct ExportPanel: View {
 
     private func performExport() async {
         do {
-            let books: [Book]
-            if booksViewModel.isSelectionMode {
-                books = booksViewModel.selectedBooksWithFilteredAnnotations
-            } else {
-                // Export all books if not in selection mode
-                books = booksViewModel.filteredBooks
-            }
-
             _ = try await exportViewModel.export(
-                books: books,
+                books: exportBooks,
                 format: exportViewModel.selectedFormat
             )
             isPresented = false
@@ -110,5 +104,18 @@ struct ExportPanel: View {
             errorMessage = error.localizedDescription
             showingError = true
         }
+    }
+
+    private var exportBooks: [Book] {
+        if let booksOverride {
+            return booksOverride
+        }
+        if booksViewModel.isSelectionMode {
+            return booksViewModel.selectedBooksWithFilteredAnnotations
+        }
+        if !selectedBookIdsForView.isEmpty {
+            return booksViewModel.filteredBooks.filter { selectedBookIdsForView.contains($0.id) }
+        }
+        return booksViewModel.filteredBooks
     }
 }

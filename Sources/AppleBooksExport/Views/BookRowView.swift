@@ -3,6 +3,7 @@ import SwiftUI
 struct BookRowView: View {
     let book: Book
     @ObservedObject var viewModel: BooksViewModel
+    let onExport: (Book) -> Void
 
     var isSelected: Bool {
         viewModel.selectedBookIds.contains(book.id)
@@ -24,57 +25,66 @@ struct BookRowView: View {
                 .accessibilityAddTraits(.isToggle)
             }
 
-            HStack(spacing: 6) {
-                Text(book.displayTitle)
-                    .font(.body)
-                    .lineLimit(1)
-
-                Text("-")
-                    .foregroundStyle(.secondary)
-
-                Text(book.displayAuthor)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-
-                Spacer()
-
-                // Small badge for quote count
-                Text("\(book.annotationCount)")
-                    .font(.caption2)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(.blue)
-                    .cornerRadius(8)
-                    .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+            if viewModel.isSelectionMode {
+                rowContent
+                    .gesture(
+                        TapGesture(count: 1)
+                            .modifiers(.command)
+                            .onEnded { _ in
+                                viewModel.toggleBookSelection(book.id)
+                            }
+                    )
+                    .simultaneousGesture(
+                        TapGesture(count: 1)
+                            .modifiers(.shift)
+                            .onEnded { _ in
+                                viewModel.handleShiftClick(book.id)
+                            }
+                    )
+            } else {
+                rowContent
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .gesture(
-                TapGesture(count: 1)
-                    .modifiers(.command)
-                    .onEnded { _ in
-                        if viewModel.isSelectionMode {
-                            viewModel.toggleBookSelection(book.id)
-                        }
-                    }
-            )
-            .simultaneousGesture(
-                TapGesture(count: 1)
-                    .modifiers(.shift)
-                    .onEnded { _ in
-                        if viewModel.isSelectionMode {
-                            viewModel.handleShiftClick(book.id)
-                        }
-                    }
-            )
         }
         .padding(.vertical, 2)
         .background(isHovering && viewModel.isSelectionMode ? Color(nsColor: .quaternaryLabelColor).opacity(0.2) : .clear)
         .onHover { hovering in
             isHovering = hovering
         }
+        .contextMenu {
+            Button("Export") {
+                onExport(book)
+            }
+        }
+    }
+
+    private var rowContent: some View {
+        HStack(spacing: 6) {
+            Text(book.displayTitle)
+                .font(.body)
+                .lineLimit(1)
+
+            Text("-")
+                .foregroundStyle(.secondary)
+
+            Text(book.displayAuthor)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Spacer()
+
+            // Small badge for quote count
+            Text("\(book.annotationCount)")
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(.blue)
+                .cornerRadius(8)
+                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
     }
 }

@@ -13,6 +13,17 @@ A native macOS application to export your Apple Books library, including highlig
 - ⌨️ Full keyboard navigation and accessibility support
 - 🖥️ Native macOS design with modern materials and effects
 
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/export-dialog.png" alt="Export Dialog" width="700">
+</p>
+
+<p align="center">
+  <img src="screenshots/app-main.png" alt="Main Interface" width="400">
+  <img src="screenshots/export-html.png" alt="HTML Export" width="400">
+</p>
+
 ## Download
 
 ### Latest Build
@@ -126,6 +137,22 @@ swift build -c release
 # Or open in Xcode
 open Package.swift
 ```
+
+### Build Configuration (Version & Bundle ID)
+
+Local builds can override versioning by copying the template:
+
+```bash
+cp version.env.example version.env
+```
+
+Then edit `version.env` with your values. This file is gitignored.
+
+CI derives:
+- `MARKETING_VERSION` from the latest git tag (e.g., `v1.2.3` → `1.2.3`)
+- `BUILD_NUMBER` from `GITHUB_RUN_NUMBER`
+
+`APPLE_TEAM_ID` is provided via GitHub Actions secrets and is not stored in the repo.
 
 ### Universal Binary
 
