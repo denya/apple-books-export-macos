@@ -3,9 +3,7 @@
 Export your Apple Books highlights, bookmarks, and notes to HTML, Markdown, JSON, or CSV.
 
 [![Download](https://img.shields.io/badge/Download-v1.0.0-blue?style=for-the-badge&logo=apple)](https://github.com/denya/apple-books-export-macos/releases/download/1.0.0/AppleBooksExport.dmg)
-[![macOS](https://img.shields.io/badge/macOS-14.0+-black?style=flat-square&logo=apple)](https://github.com/denya/apple-books-export-macos)
-[![Swift](https://img.shields.io/badge/Swift-5.9-orange?style=flat-square&logo=swift)](https://swift.org)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 ## Screenshots
 
