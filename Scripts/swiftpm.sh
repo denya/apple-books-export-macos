@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SWIFTPM_CACHE_ROOT="${SWIFTPM_CACHE_ROOT:-/tmp/swiftpm-cache}"
+export SWIFTPM_DISABLE_SANDBOX="${SWIFTPM_DISABLE_SANDBOX:-1}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$SWIFTPM_CACHE_ROOT}"
+export CLANG_MODULE_CACHE_PATH="${CLANG_MODULE_CACHE_PATH:-$SWIFTPM_CACHE_ROOT/clang-module-cache}"
+
+mkdir -p "$XDG_CACHE_HOME" "$CLANG_MODULE_CACHE_PATH"
+
+exec swift "$@"

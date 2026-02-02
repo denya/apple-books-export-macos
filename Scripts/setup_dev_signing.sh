@@ -2,7 +2,7 @@
 # Setup stable development code signing to reduce keychain prompts.
 set -euo pipefail
 
-APP_NAME=${APP_NAME:-MyApp}
+APP_NAME=${APP_NAME:-AppleBooksExport}
 CERT_NAME="${APP_NAME} Development"
 
 if security find-certificate -c "$CERT_NAME" >/dev/null 2>&1; then

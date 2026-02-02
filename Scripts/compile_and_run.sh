@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_NAME=${APP_NAME:-MyApp}
+APP_NAME=${APP_NAME:-AppleBooksExport}
 APP_BUNDLE="${ROOT_DIR}/${APP_NAME}.app"
 APP_PROCESS_PATTERN="${APP_NAME}.app/Contents/MacOS/${APP_NAME}"
 DEBUG_PROCESS_PATTERN="${ROOT_DIR}/.build/debug/${APP_NAME}"
@@ -34,7 +34,7 @@ pkill -x "${APP_NAME}" 2>/dev/null || true
 
 if [[ "${RUN_TESTS}" == "1" ]]; then
   log "==> swift test"
-  swift test -q
+  "${ROOT_DIR}/Scripts/swiftpm.sh" test -q
 fi
 
 HOST_ARCH="$(uname -m)"

@@ -3,6 +3,7 @@ import SwiftUI
 struct AnnotationRowView: View {
     let annotation: Annotation
     @ObservedObject var viewModel: BooksViewModel
+    let annotationTextFontSize: CGFloat
 
     var isSelected: Bool {
         viewModel.selectedAnnotationIds.contains(annotation.id)
@@ -61,12 +62,14 @@ struct AnnotationRowView: View {
                 // Text content
                 if let text = annotation.text, !text.isEmpty {
                     Text(text)
+                        .font(.system(size: annotationTextFontSize))
                         .lineLimit(3)
                 }
 
                 // Note content
                 if let note = annotation.note, !note.isEmpty {
                     Text(note)
+                        .font(.system(size: annotationTextFontSize))
                         .italic()
                         .foregroundStyle(.secondary)
                         .padding(.leading, 8)

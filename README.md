@@ -2,7 +2,7 @@
 
 Export your Apple Books highlights, bookmarks, and notes to HTML, Markdown, JSON, or CSV.
 
-[![Download](https://img.shields.io/badge/Download-v1.0.0-blue?style=for-the-badge&logo=apple)](https://github.com/denya/apple-books-export-macos/releases/download/1.0.0/AppleBooksExport.dmg)
+[![Download](https://img.shields.io/badge/Download-v1.0.1-blue?style=for-the-badge&logo=apple)](https://github.com/denya/apple-books-export-macos/releases/download/1.0.1/AppleBooksExport.dmg)
 [![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 ## Screenshots
@@ -57,6 +57,13 @@ Requires macOS 14.0 (Sonoma) or later.
 git clone https://github.com/denya/apple-books-export-macos.git
 cd apple-books-export-macos
 swift build -c release
+```
+
+If you see sandbox or cache permission errors in restricted environments, use the wrapper:
+
+```bash
+./Scripts/swiftpm.sh build -c release
+./Scripts/swiftpm.sh run
 ```
 
 Or open `Package.swift` in Xcode.

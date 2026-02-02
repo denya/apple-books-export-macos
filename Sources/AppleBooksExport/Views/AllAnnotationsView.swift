@@ -4,6 +4,15 @@ struct AllAnnotationsView: View {
     @ObservedObject var viewModel: BooksViewModel
     let books: [Book]
     let title: String?
+    @Binding var annotationTextSizeDelta: Double
+
+    private var clampedTextSizeDelta: Double {
+        AnnotationTextSizeSettings.clampDelta(annotationTextSizeDelta)
+    }
+
+    private var currentTextSize: CGFloat {
+        AnnotationTextSizeSettings.size(fromDelta: annotationTextSizeDelta)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -33,6 +42,33 @@ struct AllAnnotationsView: View {
 
                     Spacer()
 
+                    HStack(spacing: 6) {
+                        Text("Text Size")
+                            .foregroundStyle(.secondary)
+                        Button(action: { decrementTextSize() }) {
+                            Image(systemName: "textformat.size.smaller")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        .accessibilityLabel("Decrease text size")
+                        .help("Decrease text size")
+                        .disabled(clampedTextSizeDelta <= AnnotationTextSizeSettings.minDelta)
+
+                        Text("\(Int(currentTextSize.rounded())) pt")
+                            .monospacedDigit()
+
+                        Button(action: { incrementTextSize() }) {
+                            Image(systemName: "textformat.size.larger")
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                        .accessibilityLabel("Increase text size")
+                        .help("Increase text size")
+                        .disabled(clampedTextSizeDelta >= AnnotationTextSizeSettings.maxDelta)
+                    }
+                    .font(.body)
+                    .fixedSize()
+
                     // Sort menu for highlights
                     if books.count > 0 {
                         Menu {
@@ -48,9 +84,9 @@ struct AllAnnotationsView: View {
                             }
                         } label: {
                             Label("Sort", systemImage: "arrow.up.arrow.down")
-                                .font(.caption)
                         }
-                        .menuStyle(.borderlessButton)
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
                         .fixedSize()
                         .accessibilityLabel("Sort highlights")
                         .accessibilityHint("Current sort: \(viewModel.highlightSort.rawValue)")
@@ -91,7 +127,8 @@ struct AllAnnotationsView: View {
                                 ForEach(book.annotations) { annotation in
                                     AnnotationRowView(
                                         annotation: annotation,
-                                        viewModel: viewModel
+                                        viewModel: viewModel,
+                                        annotationTextFontSize: currentTextSize
                                     )
                                 }
                             } header: {
@@ -132,7 +169,8 @@ struct AllAnnotationsView: View {
                                 }
                                 AnnotationRowView(
                                     annotation: item.annotation,
-                                    viewModel: viewModel
+                                    viewModel: viewModel,
+                                    annotationTextFontSize: currentTextSize
                                 )
                             }
                         }
@@ -141,5 +179,20 @@ struct AllAnnotationsView: View {
                 .listStyle(.inset)
             }
         }
+        .onAppear {
+            annotationTextSizeDelta = clampedTextSizeDelta
+        }
+    }
+
+    private func decrementTextSize() {
+        annotationTextSizeDelta = AnnotationTextSizeSettings.clampDelta(
+            clampedTextSizeDelta - AnnotationTextSizeSettings.step
+        )
+    }
+
+    private func incrementTextSize() {
+        annotationTextSizeDelta = AnnotationTextSizeSettings.clampDelta(
+            clampedTextSizeDelta + AnnotationTextSizeSettings.step
+        )
     }
 }

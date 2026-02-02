@@ -415,52 +415,6 @@ Verify:
 
 ---
 
-## 🚀 GitHub Actions Testing
-
-### Before First Commit
-
-**Commit Changes:**
-```bash
-git add .
-git commit -m "Implement comprehensive UI improvements and accessibility fixes
-
-- Add professional README with download links
-- Set up GitHub Actions CI/CD for universal binaries
-- Fix all CRITICAL accessibility issues (VoiceOver labels)
-- Apply modern macOS Materials throughout UI
-- Add keyboard shortcuts and accessibility hints
-- Improve visual polish with shadows, borders, animations
-
-This release makes the app App Store ready with full accessibility compliance."
-```
-
-**Push and Test:**
-```bash
-git push origin main
-```
-
-**Verify:**
-1. Go to GitHub Actions tab
-2. Watch build complete
-3. Check Releases page for "latest" pre-release
-4. Download DMG from: `https://github.com/denya/apple-books-export-macos/releases/latest/download/AppleBooksExport.dmg`
-5. Test installation on clean Mac
-
-### Creating Version Release
-
-**Tag and Push:**
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-**Verify:**
-1. GitHub Actions builds tagged release
-2. Release appears at: `https://github.com/denya/apple-books-export-macos/releases/tag/v1.0.0`
-3. DMG available for download
-
----
-
 ## 📝 Known Limitations
 
 ### Intentional Decisions
@@ -567,14 +521,11 @@ git push origin v1.0.0
 - [ ] Test export in all formats
 - [ ] Test selection mode thoroughly
 
-### GitHub Actions Setup
+### Release Follow-ups
 
-- [ ] Commit and push changes to main
-- [ ] Verify "latest" release created automatically
 - [ ] Download and test DMG from releases page
 - [ ] (Optional) Add code signing certificates to GitHub secrets
 - [ ] (Optional) Add notarization credentials to GitHub secrets
-- [ ] Create v1.0.0 tag for first stable release
 - [ ] Add screenshots to README
 
 ### App Store Preparation (If Publishing)

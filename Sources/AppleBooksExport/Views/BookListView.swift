@@ -22,18 +22,18 @@ struct BookListView: View {
                     }
                 } label: {
                     Label("Sort", systemImage: "arrow.up.arrow.down")
-                        .font(.caption)
                 }
-                .menuStyle(.borderlessButton)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
                 .fixedSize()
                 .accessibilityLabel("Sort books")
                 .accessibilityHint("Current sort: \(viewModel.bookSort.rawValue)")
 
                 Button(action: { viewModel.showFilters.toggle() }) {
                     Label("Filters", systemImage: viewModel.showFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                        .font(.caption)
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(.bordered)
+                .controlSize(.large)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)

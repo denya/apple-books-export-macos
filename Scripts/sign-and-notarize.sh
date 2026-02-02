@@ -136,9 +136,9 @@ cat > AppleBooksExport.app/Contents/Info.plist << 'EOF'
     <key>CFBundleDisplayName</key>
     <string>Apple Books Export</string>
     <key>CFBundleVersion</key>
-    <string>1.0.0</string>
+    <string>1.0.1</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.0.1</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>LSMinimumSystemVersion</key>

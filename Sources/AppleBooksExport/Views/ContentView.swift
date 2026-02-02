@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var showingExportPanel = false
     @State private var exportBooksOverride: [Book]?
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    @AppStorage("annotationTextSizeDelta") private var annotationTextSizeDelta: Double = 0
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -29,7 +30,8 @@ struct ContentView: View {
             AllAnnotationsView(
                 viewModel: booksViewModel,
                 books: booksToShow,
-                title: selectedBookIds.isEmpty ? "All Books" : nil
+                title: selectedBookIds.isEmpty ? "All Books" : nil,
+                annotationTextSizeDelta: $annotationTextSizeDelta
             )
         }
         .toolbar {

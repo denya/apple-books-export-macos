@@ -5,7 +5,7 @@ CONF=${1:-release}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
-APP_NAME=${APP_NAME:-MyApp}
+APP_NAME=${APP_NAME:-AppleBooksExport}
 MACOS_MIN_VERSION=${MACOS_MIN_VERSION:-14.0}
 MENU_BAR_APP=${MENU_BAR_APP:-0}
 SIGNING_MODE=${SIGNING_MODE:-}
@@ -47,7 +47,7 @@ if [[ ${#ARCH_LIST[@]} -eq 0 ]]; then
 fi
 
 for ARCH in "${ARCH_LIST[@]}"; do
-  swift build -c "$CONF" --arch "$ARCH"
+  "$ROOT/Scripts/swiftpm.sh" build -c "$CONF" --arch "$ARCH"
 done
 
 APP="$ROOT/${APP_NAME}.app"

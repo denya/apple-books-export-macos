@@ -3,6 +3,7 @@ import SwiftUI
 struct AnnotationDetailView: View {
     let book: Book
     @ObservedObject var viewModel: BooksViewModel
+    @AppStorage("annotationTextSizeDelta") private var annotationTextSizeDelta: Double = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -53,7 +54,8 @@ struct AnnotationDetailView: View {
                     ForEach(book.annotations) { annotation in
                         AnnotationRowView(
                             annotation: annotation,
-                            viewModel: viewModel
+                            viewModel: viewModel,
+                            annotationTextFontSize: currentTextSize
                         )
                     }
                 }
@@ -86,5 +88,9 @@ struct AnnotationDetailView: View {
 
     private var selectedAnnotationCount: Int {
         book.annotations.filter { viewModel.selectedAnnotationIds.contains($0.id) }.count
+    }
+
+    private var currentTextSize: CGFloat {
+        AnnotationTextSizeSettings.size(fromDelta: annotationTextSizeDelta)
     }
 }
